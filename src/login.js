@@ -9,7 +9,7 @@ function Login() {
       <input></input>
       <div>비밀번호</div>
       <input type="password"></input>
-        <button>로그인</button>
+        <button class="login_button">로그인</button>
     </div>
   );
 }
