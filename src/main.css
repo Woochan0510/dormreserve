@@ -1,6 +1,6 @@
 .main_title {
-  font-size: "2.5rem";
-  text-align: "left";
+  font-size: 2.5rem;
+  text-align: left;
 }
 
 .title_line {
@@ -8,4 +8,12 @@
   height: 2px;
   background-color: #ccc;
   margin-top: 10px;
+}
+
+.top_bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 50px;
+  padding: 10px 20px;
 }
