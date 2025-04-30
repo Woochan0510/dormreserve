@@ -8,7 +8,8 @@ function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  const handleLogin = async () => {
+  const handleLogin = async (e) => {
+    e.preventDefault();
     try {
       const response = await fetch(
         "https://f7j9sz5d-8000.asse.devtunnels.ms/api/v1/users/login/",
@@ -24,7 +25,7 @@ function Login() {
         }
       );
 
-      if (response.ok) {
+      if (response.status === 200) {
         const data = await response.json();
 
         localStorage.setItem("token", data.token);
@@ -45,20 +46,24 @@ function Login() {
     <div className="height">
       <div className="login_basic">
         <h1 className="login_title">광운대학교 행복기숙사</h1>
-        <label>학번</label>
-        <input
-          value={studentId}
-          onChange={(e) => setStudentId(e.target.value)}
-        />
-        <label>비밀번호</label>
-        <input
-          type="password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-        />
-        <br />
-        <button onClick={handleLogin}>로그인</button>
-        {error && <p style={{ color: "red" }}>{error}</p>}
+        <form action="">
+          <label>학번</label>
+          <input
+            value={studentId}
+            onChange={(e) => setStudentId(e.target.value)}
+          />
+          <label>비밀번호</label>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+          />
+          <br />
+          <button onClick={handleLogin} type="submit">
+            로그인
+          </button>
+          {error && <p style={{ color: "red" }}>{error}</p>}
+        </form>
       </div>
     </div>
   );
