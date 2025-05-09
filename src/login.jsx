@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./login.css";
-
-let url = "https://cghk1284-8000.asse.devtunnels.ms/";
+import url from "./url.jsx";
 
 function Login() {
   const navigate = useNavigate();
