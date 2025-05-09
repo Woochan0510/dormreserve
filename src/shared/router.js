@@ -1,5 +1,4 @@
-import react from "react";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import Login from "../login";
 import Main from "../main";
 import Cook from "../cook";
