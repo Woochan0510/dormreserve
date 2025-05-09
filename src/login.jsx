@@ -2,6 +2,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./login.css";
 
+let url = "https://cghk1284-8000.asse.devtunnels.ms/";
+
 function Login() {
   const navigate = useNavigate();
   const [studentId, setStudentId] = useState("");
@@ -11,19 +13,16 @@ function Login() {
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
-      const response = await fetch(
-        "https://f7j9sz5d-8000.asse.devtunnels.ms/api/v1/users/login/",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            student_id_number: studentId,
-            password: password,
-          }),
-        }
-      );
+      const response = await fetch(url + "api/v1/users/login/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          student_id_number: studentId,
+          password: password,
+        }),
+      });
 
       if (response.status === 200) {
         const data = await response.json();
@@ -46,7 +45,7 @@ function Login() {
     <div className="height">
       <div className="login_basic">
         <h1 className="login_title">광운대학교 행복기숙사</h1>
-        <form action="">
+        <form className="input_bar" action="">
           <label>학번</label>
           <input
             value={studentId}
