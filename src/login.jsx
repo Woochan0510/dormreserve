@@ -1,22 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "./login.css";
-import url from "./url.jsx";
-
-function getCookie(name) {
-  let cookieValue = null;
-  if (document.cookie && document.cookie !== "") {
-    const cookies = document.cookie.split(";");
-    for (let i = 0; i < cookies.length; i++) {
-      const cookie = cookies[i].trim();
-      if (cookie.startsWith(name + "=")) {
-        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-        break;
-      }
-    }
-  }
-  return cookieValue;
-}
+import url from "./util.jsx";
 
 function Login() {
   const navigate = useNavigate();
@@ -24,16 +9,30 @@ function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
+  function getCookie(name) {
+    let cookieValue = "";
+    if (document.cookie && document.cookie !== "") {
+      const cookies = document.cookie.split(";");
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.startsWith(name + "=")) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
   const handleLogin = async (e) => {
     e.preventDefault();
-    const csrfToken = getCookie("csrftoken");
 
     try {
       const response = await fetch(url + "api/v1/users/login/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "X-CSRFToken": csrfToken,
+          "X-CSRFToken": getCookie("csrftoken") || "",
         },
         credentials: "include",
         body: JSON.stringify({
@@ -43,9 +42,6 @@ function Login() {
       });
 
       if (response.status === 200) {
-        const data = await response.json();
-
-        localStorage.setItem("token", data.token);
         navigate("/Main");
       } else if (!studentId) {
         setError("아이디를 입력해주세요.");
@@ -55,7 +51,7 @@ function Login() {
         setError("아이디 또는 비밀번호가 틀렸습니다.");
       }
     } catch (err) {
-      setError("오류 발생");
+      setError(`오류 발생 ${err}`);
     }
   };
 

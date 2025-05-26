@@ -1,20 +1,19 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import "./main.css";
-import url from "./url.jsx";
+import url from "./util.jsx";
 
 function Main() {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
-    const token = localStorage.getItem("token");
     try {
       const response = await fetch(url + "api/v1/users/logout/", {
         method: "POST",
         headers: {
-          Authorization: `Token ${token}`,
           "Content-Type": "application/json",
         },
+        credentials: "include",
       });
 
       if (response.status === 200) {
