@@ -1,0 +1,23 @@
+.base {
+  height: 100vh;
+}
+
+.top_bar {
+  font-size: 30px;
+  background-color: whitesmoke;
+}
+
+.main {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 80%;
+}
+
+.map {
+  border-width: 2px;
+  border-color: black;
+  border-style: solid;
+  width: 50%;
+  height: 90%;
+}
