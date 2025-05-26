@@ -53,8 +53,16 @@ function Main() {
         <button onClick={handleLogout}>로그아웃</button>
       </div>
       <div className="title_line" />
-      <div>
-        <div onClick={() => navigate("/book/cook")}>취사실 예약</div>
+      <div className="main_cell">
+        <div className="square" onClick={() => navigate("/book/cook")}>
+          취사실 예약
+        </div>
+        <div className="square" onClick={() => navigate("/book/lounge")}>
+          오락실 예약
+        </div>
+        <div className="square" onClick={() => navigate("/book/gym")}>
+          헬스장 예약
+        </div>
       </div>
     </div>
   );

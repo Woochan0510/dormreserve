@@ -17,3 +17,25 @@
   height: 50px;
   padding: 10px 20px;
 }
+
+.main_cell {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-evenly;
+}
+
+.square {
+  width: 300px;
+  height: 300px;
+  background-color: gray;
+  border-width: 1px;
+  border-color: black;
+  border-style: solid;
+  text-align: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 20px;
+  margin-top: 40px;
+  cursor: pointer;
+}
