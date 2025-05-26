@@ -4,7 +4,7 @@ import CookGrid from "./CookGrid";
 
 function Cook() {
   return (
-    <div clasName="base">
+    <div className="base">
       <div className="top_bar">
         <div className="top_title_name">취사실 예약</div>
       </div>
