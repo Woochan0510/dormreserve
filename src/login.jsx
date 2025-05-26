@@ -3,6 +3,21 @@ import { useNavigate } from "react-router-dom";
 import "./login.css";
 import url from "./url.jsx";
 
+function getCookie(name) {
+  let cookieValue = null;
+  if (document.cookie && document.cookie !== "") {
+    const cookies = document.cookie.split(";");
+    for (let i = 0; i < cookies.length; i++) {
+      const cookie = cookies[i].trim();
+      if (cookie.startsWith(name + "=")) {
+        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+        break;
+      }
+    }
+  }
+  return cookieValue;
+}
+
 function Login() {
   const navigate = useNavigate();
   const [studentId, setStudentId] = useState("");
@@ -11,12 +26,16 @@ function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    const csrfToken = getCookie("csrftoken");
+
     try {
       const response = await fetch(url + "api/v1/users/login/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
         },
+        credentials: "include",
         body: JSON.stringify({
           student_id_number: studentId,
           password: password,
