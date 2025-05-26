@@ -1,8 +1,11 @@
 import React from "react";
 import "./cook.css";
 import CookGrid from "./CookGrid";
+import { useNavigate } from "react-router-dom";
 
 function Cook() {
+  const navigate = useNavigate();
+
   return (
     <div className="base">
       <div className="top_bar">
@@ -26,6 +29,9 @@ function Cook() {
         <div className="map">
           <CookGrid />
         </div>
+        <button onClick={() => navigate("/main/")} className="main_button">
+          메인화면
+        </button>
       </div>
     </div>
   );

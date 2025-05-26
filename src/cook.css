@@ -13,6 +13,7 @@
   align-items: center;
   justify-content: center;
   height: 80%;
+  flex-direction: column;
 }
 
 .map {
@@ -40,4 +41,8 @@
   height: 10px;
   width: 10px;
   border-radius: 50%;
+}
+
+.main_button {
+  margin-top: 10px;
 }
