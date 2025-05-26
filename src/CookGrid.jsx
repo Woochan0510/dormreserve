@@ -27,7 +27,6 @@ const CookGrid = () => {
   ];
 
   // 상태(state) 변수들을 정의합니다.
-  // statuses는 이제 is_available과 is_using을 모두 포함하는 객체 배열이 됩니다.
   const [statuses, setStatuses] = useState(Array(8).fill(null));
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedInduction, setSelectedInducion] = useState(null);
@@ -146,7 +145,6 @@ const CookGrid = () => {
     }
   };
 
-  // --- 핵심 수정 사항: fetchStatuses 함수 ---
   // 컴포넌트 마운트 시 인덕션 상태를 초기 로딩합니다.
   const fetchStatuses = async () => {
     try {
@@ -162,10 +160,9 @@ const CookGrid = () => {
       apiData.forEach((item) => {
         const index = item.pk - 1;
         if (index >= 0 && index < 8) {
-          // is_available과 is_using 두 가지 정보를 모두 저장합니다.
           sortedStatuses[index] = {
             is_available: item.is_available,
-            is_using: item.is_using, // 새로운 필드 추가
+            is_using: item.is_using,
           };
         }
       });
@@ -188,28 +185,22 @@ const CookGrid = () => {
 
   // 인덕션 클릭 시 호출되는 함수
   const handleClick = (inductionNumber) => {
-    const statusData = statuses[inductionNumber - 1]; // 이제 객체를 가져옵니다.
+    const statusData = statuses[inductionNumber - 1];
 
     if (!statusData) {
-      // 데이터 로딩 중이거나 오류 시
       alert("인덕션 상태를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
       return;
     }
 
-    if (statusData.is_using === true) {
-      // is_using이 true이면 바로 빨간색 처리하고 클릭 막기
-      alert("이 인덕션은 현재 사용 중입니다.");
-      return;
-    }
-
+    // is_available이 false (인덕션 사용 불가) 일 때만 경고 메시지를 띄우고 모달을 열지 않습니다.
     if (statusData.is_available === false) {
-      // is_available이 false이면 사용할 수 없음
       alert("이 인덕션은 현재 사용할 수 없습니다.");
       return;
     }
 
-    // is_using이 false이고 is_available이 true일 때만 예약 가능
-    if (statusData.is_available === true && statusData.is_using === false) {
+    // 인덕션이 is_available이 true이면 is_using 여부와 상관없이 모달을 엽니다.
+    // (사용 중이더라도 예약은 가능하도록)
+    if (statusData.is_available === true) {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
@@ -235,17 +226,17 @@ const CookGrid = () => {
         <div className="table" key={tableIndex}>
           {items.map((induction, inductionIndex) => {
             const number = globalInductionNumber++;
-            const statusData = statuses[number - 1]; // 이제 객체를 가져옵니다.
+            const statusData = statuses[number - 1];
 
             let backgroundColor;
             if (statusData === null) {
               backgroundColor = "gray"; // 로딩 중
             } else if (statusData.is_using === true) {
-              backgroundColor = "red"; // 사용 중일 때 빨간색
+              backgroundColor = "red"; // 사용 중일 때 빨간색 (클릭은 가능)
             } else if (statusData.is_available === false) {
-              backgroundColor = "red"; // 사용 불가능할 때 빨간색
+              backgroundColor = "red"; // 사용 불가능할 때 빨간색 (클릭 불가)
             } else {
-              backgroundColor = "green"; // 사용 가능할 때 초록색
+              backgroundColor = "green"; // 사용 가능하고 사용 중 아닐 때 초록색
             }
 
             return (
@@ -255,7 +246,11 @@ const CookGrid = () => {
                 style={{
                   ...induction,
                   position: "absolute",
-                  cursor: "pointer",
+                  // is_available이 false일 때만 클릭을 막습니다. (is_using은 예약 가능)
+                  cursor:
+                    statusData && statusData.is_available === false
+                      ? "not-allowed"
+                      : "pointer",
                   backgroundColor,
                 }}
                 onClick={() => handleClick(number)}
