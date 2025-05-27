@@ -1,6 +1,8 @@
 import React from "react";
 import "../../styles/GymPage.css";
 import { useNavigate } from "react-router-dom";
+import CycleGrid from "../../components/gym/CycleGrid";
+import TreadMillGrid from "../../components/gym/TreadMillGrid";
 
 function Gym() {
   const navigate = useNavigate();
@@ -25,7 +27,12 @@ function Gym() {
         </div>
       </div>
       <div className="main">
-        <div className="map">여기에 삽입</div>
+        <div className="map">
+          <div className="w-full max-w-[900px] mx-auto">
+            <TreadMillGrid />
+            <CycleGrid />
+          </div>
+        </div>
         <button onClick={() => navigate("/main/")} className="main_button">
           메인화면
         </button>
