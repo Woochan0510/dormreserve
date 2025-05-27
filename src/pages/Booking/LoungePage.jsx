@@ -1,6 +1,6 @@
 import "../../styles/LoungePage.css";
 import { useNavigate } from "react-router-dom";
-import LoungeGrid from "./PingpongGrid.jsx";
+import LoungeGrid from "../../components/lounge/PingpongGrid";
 
 function Lounge() {
   const navigate = useNavigate();

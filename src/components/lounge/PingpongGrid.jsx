@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import "../../styles/PingPongGrid.css";
+import "../../styles/PingpongGrid.css";
 import API_BASE_URL from "../../config/api";
 import axios from "axios";
 
