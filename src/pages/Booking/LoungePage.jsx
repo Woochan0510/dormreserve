@@ -1,5 +1,6 @@
 import "../../styles/LoungePage.css";
 import { useNavigate } from "react-router-dom";
+import LoungeGrid from "./PingpongGrid.jsx";
 
 function Lounge() {
   const navigate = useNavigate();
@@ -7,7 +8,7 @@ function Lounge() {
   return (
     <div className="base">
       <div className="top_bar">
-        <div className="top_bar_name">헬스장 예약</div>
+        <div className="top_bar_name">오락실 예약</div>
         <div className="top_right">
           <div className="top_right_set">
             <div className="circle" style={{ backgroundColor: "green" }} />
@@ -24,7 +25,9 @@ function Lounge() {
         </div>
       </div>
       <div className="main">
-        <div className="map">여기에 삽입</div>
+        <div className="map">
+          <LoungeGrid />
+        </div>
         <button onClick={() => navigate("/main/")} className="main_button">
           메인화면
         </button>
