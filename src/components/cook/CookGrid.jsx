@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import API_BASE_URL from "../../config/api";
 import axios from "axios";
+import "../../styles/CookGrid.css";
 
 const CookGrid = () => {
   // 인덕션 배치 정보를 정의합니다.
