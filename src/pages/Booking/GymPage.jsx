@@ -1,8 +1,5 @@
 import React from "react";
-import "./CookGrid.css";
-import url from "./util.jsx";
-import axios from "axios";
-import "./gym.css";
+import "../../styles/GymPage.css";
 import { useNavigate } from "react-router-dom";
 
 function Gym() {

@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import "./main.css";
-import url from "./util.jsx";
+import "../styles/MainPage.css";
+import API_BASE_URL from "../config/api";
 import axios from "axios";
 
 function Main() {
@@ -26,7 +26,7 @@ function Main() {
   const handleLogout = async () => {
     axios
       .post(
-        `${url}api/v1/users/logout/`,
+        `${API_BASE_URL}api/v1/users/logout/`,
         {},
         {
           headers: {

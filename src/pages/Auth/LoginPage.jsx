@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import "./login.css";
-import url from "./util.jsx";
+import "../../styles/LoginPage.css";
+import API_BASE_URL from "../../config/api";
 
 function Login() {
   const navigate = useNavigate();
@@ -28,7 +28,7 @@ function Login() {
     e.preventDefault();
 
     try {
-      const response = await fetch(url + "api/v1/users/login/", {
+      const response = await fetch(API_BASE_URL + "api/v1/users/login/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

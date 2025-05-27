@@ -1,9 +1,9 @@
 import { Routes, Route } from "react-router-dom";
-import Login from "../login";
-import Main from "../main";
-import Cook from "../cook";
-import Lounge from "../lounge";
-import Gym from "../gym";
+import Main from "../pages/MainPage";
+import Login from "../pages/Auth/LoginPage";
+import Cook from "../pages/Booking/CookPage";
+import Gym from "../pages/Booking/GymPage";
+import Lounge from "../pages/Booking/LoungePage";
 
 const Router = () => {
   return (

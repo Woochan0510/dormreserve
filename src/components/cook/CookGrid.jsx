@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from "react";
-import "./CookGrid.css";
-import url from "./util.jsx";
+import API_BASE_URL from "../../config/api";
 import axios from "axios";
 
 const CookGrid = () => {
@@ -29,7 +28,7 @@ const CookGrid = () => {
   // 상태(state) 변수들을 정의합니다.
   const [statuses, setStatuses] = useState(Array(8).fill(null));
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedInduction, setSelectedInducion] = useState(null);
+  const [selectedInduction, setSelectedInduction] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
   const [timeSlots, setTimeSlots] = useState([]);
 
@@ -66,7 +65,7 @@ const CookGrid = () => {
   const reserveSlot = async (startTime) => {
     try {
       await axios.post(
-        `${url}api/v1/kitchen/inductions/${selectedInduction}/book/`,
+        `${API_BASE_URL}api/v1/kitchen/inductions/${selectedInduction}/book/`,
         {
           start_time: startTime,
           duration_minute: 30,
@@ -101,7 +100,7 @@ const CookGrid = () => {
 
     try {
       const res = await axios.get(
-        `${url}api/v1/kitchen/inductions/${selectedInduction}/timeslots/`,
+        `${API_BASE_URL}api/v1/kitchen/inductions/${selectedInduction}/timeslots/`,
         {
           params: { date: selectedDate },
           withCredentials: true,
@@ -148,7 +147,7 @@ const CookGrid = () => {
   // 컴포넌트 마운트 시 인덕션 상태를 초기 로딩합니다.
   const fetchStatuses = async () => {
     try {
-      const res = await axios.get(`${url}api/v1/kitchen/inductions/`, {
+      const res = await axios.get(`${API_BASE_URL}api/v1/kitchen/inductions/`, {
         headers: {
           "X-CSRFToken": getCookie("csrftoken") || "",
         },
@@ -210,7 +209,7 @@ const CookGrid = () => {
       const formattedToday = `${year}-${month}-${day}`;
 
       setSelectedDate(formattedToday);
-      setSelectedInducion(inductionNumber);
+      setSelectedInduction(inductionNumber);
       setIsModalOpen(true);
     }
   };
