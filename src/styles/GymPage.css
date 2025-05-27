@@ -1,48 +1,53 @@
-.base {
-  height: 100vh;
-}
-
-.top_bar {
-  font-size: 30px;
-  background-color: whitesmoke;
-  height: 60px;
-}
-
-.main {
+/* src/styles/GymPage.css */
+.base-page-container {
   display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* .top_bar 등 SharedHeader 관련 스타일 제거 */
+
+.main-content-area {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  height: 80%;
-  flex-direction: column;
+  padding: 20px;
+  background-color: #fff;
 }
 
 .map {
-  border-width: 2px;
-  border-color: black;
-  border-style: solid;
-  width: 70%;
-  height: 90%;
+  border: 2px solid black;
+  width: 90%;
+  max-width: 1000px;
+  height: auto;
+  min-height: 400px;
+  aspect-ratio: 16 / 9;
+  padding: 15px;
+  box-sizing: border-box;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.top_right {
-  flex-direction: column;
+.map .w-full {
+  /* TreadMillGrid, CycleGrid를 감싸는 div */
   display: flex;
-  margin-top: 30;
+  flex-direction: column; /* 내부 그리드들을 수직으로 쌓음 */
+  height: 100%; /* 부모 높이 전체 사용 */
 }
 
-.top_right_set {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  font-size: 20px;
-}
+/* TreadMillGrid.css, CycleGrid.css 와의 관계를 고려하여 중복 스타일 정리 */
 
-.circle {
-  height: 10px;
-  width: 10px;
-  border-radius: 50%;
-}
-
-.main_button {
-  margin-top: 10px;
+@media (max-width: 768px) {
+  .main-content-area {
+    padding: 15px;
+  }
+  .map {
+    width: 95%;
+    min-height: 300px;
+    aspect-ratio: unset;
+    height: 70vh;
+  }
 }

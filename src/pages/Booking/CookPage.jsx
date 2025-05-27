@@ -1,37 +1,26 @@
+// src/pages/Booking/CookPage.jsx
 import React from "react";
 import "../../styles/CookPage.css";
 import CookGrid from "../../components/cook/CookGrid";
-import { useNavigate } from "react-router-dom";
+// Removed: import { useNavigate } from "react-router-dom";
+// Removed: import { logoutUser } from "../../services/authService";
 
 function Cook() {
-  const navigate = useNavigate();
+  // Removed: const navigate = useNavigate();
+  // Removed: const handleLogout = ...
 
   return (
-    <div className="base">
-      <div className="top_bar">
-        <div className="top_title_name">취사실 예약</div>
-        <div className="top_right">
-          <div className="top_right_set">
-            <div className="circle" style={{ backgroundColor: "green" }} />
-            <div>사용가능</div>
-          </div>
-          <div className="top_right_set">
-            <div className="circle" style={{ backgroundColor: "red" }} />
-            <div>사용중</div>
-          </div>
-          <div className="top_right_set">
-            <div className="circle" style={{ backgroundColor: "yellow" }} />
-            <div>수리중</div>
-          </div>
-        </div>
-      </div>
-      <div className="main">
+    <div className="base-page-container">
+      {" "}
+      {/* 전체 페이지 컨테이너 */}
+      {/* SharedHeader가 AppRouter에서 이 페이지를 감싸면서 렌더링됩니다. */}
+      {/* pageTitle과 showLegend는 AppRouter의 MainLayout을 통해 전달됩니다. */}
+      <div className="main-content-area">
+        {" "}
+        {/* 헤더를 제외한 컨텐츠 영역 */}
         <div className="map">
           <CookGrid />
         </div>
-        <button onClick={() => navigate("/main/")} className="main_button">
-          메인화면
-        </button>
       </div>
     </div>
   );

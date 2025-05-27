@@ -1,0 +1,168 @@
+/* src/styles/SharedHeader.css */
+.shared-top-bar {
+  background-color: whitesmoke;
+  padding: 10px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #ccc;
+  min-height: 60px;
+}
+
+.shared-top-bar-left-content {
+  display: flex;
+  align-items: center;
+}
+
+.main-link {
+  font-size: 1rem;
+  color: #0056b3; /* 광운대학교 로고 색상과 유사하게 */
+  text-decoration: none;
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.main-link:hover {
+  text-decoration: underline;
+}
+
+.page-title {
+  font-size: 1.5rem;
+  margin-left: 20px;
+  color: #333;
+  font-weight: bold;
+}
+
+.shared-top-bar-right-content {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.legend-container {
+  display: flex;
+  align-items: center;
+  margin-right: 20px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+  margin-left: 15px;
+  color: #555;
+}
+
+.legend-item:first-child {
+  margin-left: 0;
+}
+
+.circle {
+  height: 10px;
+  width: 10px;
+  border-radius: 50%;
+  margin-right: 5px;
+  border: 1px solid rgba(0, 0, 0, 0.1); /* 원 테두리 살짝 추가 */
+}
+
+.auth-buttons-container {
+  display: flex;
+  align-items: center;
+}
+
+.auth-buttons-container button {
+  padding: 8px 12px; /* 버튼 패딩 조정 */
+  margin-left: 10px;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem; /* 버튼 폰트 크기 약간 작게 */
+  font-weight: 500;
+  transition: background-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.auth-buttons-container .password-change-button {
+  background-color: #6c757d; /* 부드러운 회색 계열 */
+}
+.auth-buttons-container .password-change-button:hover {
+  background-color: #5a6268;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.auth-buttons-container .logout-button {
+  background-color: #dc3545; /* 로그아웃, 주의를 나타내는 붉은색 계열 */
+}
+
+.auth-buttons-container .logout-button:hover {
+  background-color: #c82333;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* 반응형 스타일 */
+@media (max-width: 768px) {
+  .shared-top-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 15px;
+  }
+
+  .shared-top-bar-left-content {
+    margin-bottom: 10px;
+    width: 100%; /* 작은 화면에서 왼쪽 컨텐츠 전체 너비 */
+    justify-content: space-between; /* 메인으로 링크와 페이지 제목 양쪽 정렬 */
+  }
+
+  .page-title {
+    margin-left: 10px; /* "메인으로" 링크와의 간격 줄임 */
+    font-size: 1.3rem;
+  }
+
+  .shared-top-bar-right-content {
+    width: 100%;
+    flex-direction: column; /* 오른쪽 컨텐츠 세로 정렬 */
+    align-items: stretch; /* 버튼 등 내부 요소들 너비 채우도록 */
+  }
+
+  .legend-container {
+    margin-right: 0;
+    margin-bottom: 10px;
+    justify-content: center; /* 범례 중앙 정렬 */
+    width: 100%;
+    padding: 5px 0; /* 범례 위아래 여백 */
+    border-top: 1px solid #eee; /* 구분선 */
+    border-bottom: 1px solid #eee; /* 구분선 */
+  }
+
+  .legend-item {
+    margin: 0 8px; /* 범례 아이템간 간격 */
+  }
+
+  .auth-buttons-container {
+    width: 100%;
+    justify-content: space-evenly; /* 버튼들 간격 동일하게 */
+  }
+
+  .auth-buttons-container button {
+    margin: 5px; /* 버튼 상하좌우 여백 */
+    flex-grow: 1; /* 버튼이 가능한 공간 채우도록 */
+  }
+}
+
+@media (max-width: 480px) {
+  .page-title {
+    font-size: 1.2rem;
+  }
+  .main-link {
+    font-size: 0.9rem;
+  }
+  .legend-item {
+    font-size: 0.8rem;
+    margin: 0 5px;
+  }
+  .auth-buttons-container button {
+    padding: 7px 10px;
+    font-size: 0.8rem;
+  }
+}
