@@ -8,6 +8,7 @@ function Login() {
   const [studentId, setStudentId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false); // 로딩 상태 추가
 
   function getCookie(name) {
     let cookieValue = "";
@@ -26,9 +27,22 @@ function Login() {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    setError(""); // 이전 에러 메시지 초기화
+
+    if (!studentId) {
+      setError("학번을 입력해주세요.");
+      return;
+    }
+    if (!password) {
+      setError("비밀번호를 입력해주세요.");
+      return;
+    }
+
+    setLoading(true); // 로딩 시작
 
     try {
       const response = await fetch(API_BASE_URL + "api/v1/users/login/", {
+        //
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -43,39 +57,61 @@ function Login() {
 
       if (response.status === 200) {
         navigate("/Main");
-      } else if (!studentId) {
-        setError("아이디를 입력해주세요.");
-      } else if (!password) {
-        setError("비밀번호를 입력해주세요.");
       } else {
-        setError("아이디 또는 비밀번호가 틀렸습니다.");
+        const errorData = await response.json().catch(() => ({})); // 에러 응답이 JSON이 아닐 경우를 대비
+        setError(
+          errorData.detail ||
+            errorData.message ||
+            "학번 또는 비밀번호가 틀렸습니다."
+        );
       }
     } catch (err) {
-      setError(`오류 발생 ${err}`);
+      setError(`로그인 중 오류가 발생했습니다. (${err.message})`);
+    } finally {
+      setLoading(false); // 로딩 종료
     }
   };
 
   return (
-    <div className="height">
-      <div className="login_basic">
-        <h1 className="login_title">광운대학교 행복기숙사</h1>
-        <form className="input_bar" action="">
-          <label>학번</label>
-          <input
-            value={studentId}
-            onChange={(e) => setStudentId(e.target.value)}
+    <div className="login-page-container">
+      <div className="login-form-container">
+        <div className="login-header">
+          <img
+            src="/kw_logo.svg"
+            alt="광운대학교 로고"
+            className="login-logo"
           />
-          <label>비밀번호</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <br />
-          <button onClick={handleLogin} type="submit">
-            로그인
+          <h1 className="login-title">광운대학교 행복기숙사</h1>
+          <p className="login-subtitle">시설 예약 시스템</p>
+        </div>
+        <form className="login-form" onSubmit={handleLogin}>
+          <div className="input-group">
+            <label htmlFor="studentId">학번</label>
+            <input
+              id="studentId"
+              type="text"
+              value={studentId}
+              onChange={(e) => setStudentId(e.target.value)}
+              placeholder="학번을 입력하세요"
+              disabled={loading}
+            />
+          </div>
+          <div className="input-group">
+            <label htmlFor="password">비밀번호</label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="비밀번호를 입력하세요"
+              disabled={loading}
+            />
+          </div>
+          {error && <p className="error-message">{error}</p>}
+          {loading && <p className="loading-message">로그인 중...</p>}
+          <button type="submit" className="login-button" disabled={loading}>
+            {loading ? "로그인 중..." : "로그인"}
           </button>
-          {error && <p style={{ color: "red" }}>{error}</p>}
         </form>
       </div>
     </div>
