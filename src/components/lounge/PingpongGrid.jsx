@@ -9,13 +9,13 @@ const PingPongGrid = () => {
       type: "pingPongTable",
       number: 1,
       pk: 1,
-      style: { top: "20%", left: "30%" },
+      style: { top: "5%", left: "0%" },
     },
     {
       type: "pingPongTable",
       number: 2,
       pk: 2,
-      style: { top: "40%", left: "30%" },
+      style: { top: "17%", left: "0%" },
     },
   ];
 
@@ -245,13 +245,15 @@ const PingPongGrid = () => {
 
         let displayName = `탁구대 ${item.number}`;
 
+        console.log(`탁구대 ${item.number} 상태:`, statusData);
+
         let backgroundColor;
         if (statusData === null) {
           backgroundColor = "gray";
-        } else if (!statusData.is_available) {
-          backgroundColor = "green"; // 또는 회색
-        } else if (statusData.is_using) {
+        } else if (statusData.is_using === true) {
           backgroundColor = "red";
+        } else if (statusData.is_available === false) {
+          backgroundColor = "green";
         } else {
           backgroundColor = "green";
         }
