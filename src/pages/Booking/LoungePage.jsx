@@ -1,6 +1,7 @@
 import "../../styles/LoungePage.css";
 import { useNavigate } from "react-router-dom";
-import LoungeGrid from "../../components/lounge/PingpongGrid";
+import PingPongGrid from "../../components/lounge/PingpongGrid.jsx";
+import ArcadeGrid from "../../components/lounge/ArcadeGrid.jsx";
 
 function Lounge() {
   const navigate = useNavigate();
@@ -26,7 +27,10 @@ function Lounge() {
       </div>
       <div className="main">
         <div className="map">
-          <LoungeGrid />
+          <div className="main_row">
+            <ArcadeGrid />
+            <PingPongGrid />
+          </div>
         </div>
         <button onClick={() => navigate("/main/")} className="main_button">
           메인화면
