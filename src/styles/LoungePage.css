@@ -45,4 +45,12 @@
 
 .main_button {
   margin-top: 10px;
+  position: relative;
+  z-index: 1000;
+}
+
+.main_row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
 }
