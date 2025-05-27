@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
-import "./PingpongGrid.css";
-import url from "./util.jsx";
+import "../../styles/PingPongGrid.css";
+import API_BASE_URL from "../../config/api";
 import axios from "axios";
 
 const PingPongGrid = () => {
@@ -69,7 +69,7 @@ const PingPongGrid = () => {
 
     try {
       await axios.post(
-        `${url}api/v1/lounge/ping-pong-tables/${selectedItem.pk}/book/`,
+        `${API_BASE_URL}api/v1/lounge/ping-pong-tables/${selectedItem.pk}/book/`,
         {
           start_time: startTime,
           duration_minutes: 30,
@@ -102,7 +102,7 @@ const PingPongGrid = () => {
 
     try {
       const res = await axios.get(
-        `${url}api/v1/lounge/ping-pong-tables/${selectedItem.pk}/timeslots/`,
+        `${API_BASE_URL}api/v1/lounge/ping-pong-tables/${selectedItem.pk}/timeslots/`,
         {
           params: { date: selectedDate },
           withCredentials: true,
@@ -167,7 +167,7 @@ const PingPongGrid = () => {
   const fetchStatuses = async () => {
     try {
       const pingPongTablesRes = await axios.get(
-        `${url}api/v1/lounge/ping-pong-tables/`,
+        `${API_BASE_URL}api/v1/lounge/ping-pong-tables/`,
         {
           headers: {
             "X-CSRFToken": getCookie("csrftoken") || "",
