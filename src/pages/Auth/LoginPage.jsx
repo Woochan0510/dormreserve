@@ -1,35 +1,22 @@
+// src/pages/Auth/LoginPage.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../styles/LoginPage.css";
-import API_BASE_URL from "../../config/api";
+import API_BASE_URL from "../../config/api"; // Still used for direct fetch, consider moving to authService fully
 import KWLogo from "../../assets/images/kw_logo_word_mark.jpg";
+// Import loginUser from authService
+import { loginUser } from "../../services/authService";
 
 function Login() {
   const navigate = useNavigate();
   const [studentId, setStudentId] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false); // 로딩 상태 추가
-
-  function getCookie(name) {
-    let cookieValue = "";
-    if (document.cookie && document.cookie !== "") {
-      const cookies = document.cookie.split(";");
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.startsWith(name + "=")) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
-        }
-      }
-    }
-    return cookieValue;
-  }
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e) => {
     e.preventDefault();
-    setError(""); // 이전 에러 메시지 초기화
-
+    setError("");
     if (!studentId) {
       setError("학번을 입력해주세요.");
       return;
@@ -38,38 +25,44 @@ function Login() {
       setError("비밀번호를 입력해주세요.");
       return;
     }
-
-    setLoading(true); // 로딩 시작
+    setLoading(true);
 
     try {
-      const response = await fetch(API_BASE_URL + "api/v1/users/login/", {
-        //
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "X-CSRFToken": getCookie("csrftoken") || "",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          student_id_number: studentId,
-          password: password,
-        }),
-      });
+      // Use loginUser from authService
+      const response = await loginUser(studentId, password); //
 
-      if (response.status === 200) {
+      if (response.data && response.data.token) {
+        // Store the token in localStorage
+        localStorage.setItem("authToken", response.data.token);
+        navigate("/Main");
+      } else if (
+        response.status === 200 &&
+        response.data.detail === "로그인 성공" &&
+        response.data.token
+      ) {
+        // Fallback for the provided response structure
+        localStorage.setItem("authToken", response.data.token);
         navigate("/Main");
       } else {
-        const errorData = await response.json().catch(() => ({})); // 에러 응답이 JSON이 아닐 경우를 대비
+        // Handle cases where token might be missing or response structure is different
+        const errorData = response.data || {};
         setError(
           errorData.detail ||
             errorData.message ||
-            "학번 또는 비밀번호가 틀렸습니다."
+            "로그인에 성공했으나 토큰이 없습니다. 관리자에게 문의하세요."
         );
       }
     } catch (err) {
-      setError(`로그인 중 오류가 발생했습니다. (${err.message})`);
+      let errorMessage = "학번 또는 비밀번호가 틀렸습니다.";
+      if (err.response && err.response.data) {
+        errorMessage =
+          err.response.data.detail || err.response.data.message || errorMessage;
+      } else if (err.message) {
+        errorMessage = `로그인 중 오류가 발생했습니다. (${err.message})`;
+      }
+      setError(errorMessage);
     } finally {
-      setLoading(false); // 로딩 종료
+      setLoading(false);
     }
   };
 

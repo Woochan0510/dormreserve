@@ -1,46 +1,20 @@
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import "../../styles/TreadMillGrid.css";
-import API_BASE_URL from "../../config/api.js";
-import axios from "axios";
+
+import {
+  fetchTreadmillStatuses,
+  fetchTreadmillTimeSlots,
+  reserveTreadmillSlot as reserveTreadmillSlotAPI,
+} from "../../services/bookingService";
 
 const TreadMillGrid = () => {
   const itemsLayout = [
-    {
-      type: "cycleTable",
-      number: 1,
-      pk: 1,
-      style: { top: "3%", left: "10%" },
-    },
-    {
-      type: "cycleTable",
-      number: 2,
-      pk: 2,
-      style: { top: "3%", left: "20%" },
-    },
-    {
-      type: "cycleTable",
-      number: 3,
-      pk: 3,
-      style: { top: "3%", left: "30%" },
-    },
-    {
-      type: "cycleTable",
-      number: 4,
-      pk: 4,
-      style: { top: "3%", left: "40%" },
-    },
-    {
-      type: "cycleTable",
-      number: 5,
-      pk: 5,
-      style: { top: "3%", left: "50%" },
-    },
-    {
-      type: "cycleTable",
-      number: 6,
-      pk: 6,
-      style: { top: "3%", left: "60%" },
-    },
+    { type: "cycleTable", number: 1, pk: 1, style: { top: "3%", left: "10%" } },
+    { type: "cycleTable", number: 2, pk: 2, style: { top: "3%", left: "20%" } },
+    { type: "cycleTable", number: 3, pk: 3, style: { top: "3%", left: "30%" } },
+    { type: "cycleTable", number: 4, pk: 4, style: { top: "3%", left: "40%" } },
+    { type: "cycleTable", number: 5, pk: 5, style: { top: "3%", left: "50%" } },
+    { type: "cycleTable", number: 6, pk: 6, style: { top: "3%", left: "60%" } },
   ];
 
   const [statuses, setStatuses] = useState(
@@ -60,52 +34,18 @@ const TreadMillGrid = () => {
         slots.push(`${hh}:${mm}`);
       }
     }
-    for (let hour = 0; hour < 1; hour++) {
-      for (let min = 0; min < 60; min += 30) {
-        const hh = String(hour).padStart(2, "0");
-        const mm = String(min).padStart(2, "0");
-        slots.push(`nextDay${hh}:${mm}`);
-      }
-    }
+    slots.push(`nextDay00:00`);
+    slots.push(`nextDay00:30`);
     return slots;
   };
-
-  function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== "") {
-      const cookies = document.cookie.split(";");
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.startsWith(name + "=")) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
-        }
-      }
-    }
-    return cookieValue;
-  }
 
   const reserveSlot = async (startTime) => {
     if (!selectedItem || selectedItem.pk === null) {
       alert("예약할 아이템 정보가 불완전합니다.");
       return;
     }
-
     try {
-      await axios.post(
-        `${API_BASE_URL}api/v1/gym/treadmills/${selectedItem.pk}/book/`,
-        {
-          start_time: startTime,
-          duration_minutes: 30,
-        },
-        {
-          headers: {
-            "X-CSRFToken": getCookie("csrftoken") || "",
-            "Content-Type": "application/json",
-          },
-          withCredentials: true,
-        }
-      );
+      await reserveTreadmillSlotAPI(selectedItem.pk, startTime);
 
       alert("예약이 완료되었습니다.");
       await fetchSlotsForSelectedItem();
@@ -123,18 +63,8 @@ const TreadMillGrid = () => {
 
   const fetchSlotsForSelectedItem = async () => {
     if (!selectedDate || !selectedItem || selectedItem.pk === null) return;
-
     try {
-      const res = await axios.get(
-        `${API_BASE_URL}api/v1/gym/treadmills/${selectedItem.pk}/timeslots/`,
-        {
-          params: { date: selectedDate },
-          withCredentials: true,
-          headers: {
-            "X-CSRFToken": getCookie("csrftoken") || "",
-          },
-        }
-      );
+      const res = await fetchTreadmillTimeSlots(selectedItem.pk, selectedDate);
 
       const bookedSet = new Set(
         res.data.map((slot) => {
@@ -149,23 +79,27 @@ const TreadMillGrid = () => {
       );
 
       const now = new Date();
-
       const allSlots = getTimeSlots().map((time) => {
         let fullDateTime;
         let slotDateTime;
+        let displayTime = time;
+
         if (time.startsWith("nextDay")) {
           const actualTime = time.substring(7);
-          const nextDay = new Date(selectedDate);
-          nextDay.setDate(nextDay.getDate() + 1);
-          const nextDayFormatted = `${nextDay.getFullYear()}-${String(
-            nextDay.getMonth() + 1
-          ).padStart(2, "0")}-${String(nextDay.getDate()).padStart(2, "0")}`;
+          const nextDayDate = new Date(selectedDate);
+          nextDayDate.setDate(new Date(selectedDate).getDate() + 1);
+          const nextDayFormatted = `${nextDayDate.getFullYear()}-${String(
+            nextDayDate.getMonth() + 1
+          ).padStart(2, "0")}-${String(nextDayDate.getDate()).padStart(
+            2,
+            "0"
+          )}`;
           fullDateTime = `${nextDayFormatted}T${actualTime}`;
-          slotDateTime = new Date(fullDateTime);
+          displayTime = `다음날 ${actualTime}`;
         } else {
           fullDateTime = `${selectedDate}T${time}`;
-          slotDateTime = new Date(fullDateTime);
         }
+        slotDateTime = new Date(fullDateTime);
 
         const isPast = slotDateTime < now;
         const isBooked = bookedSet.has(fullDateTime);
@@ -174,13 +108,9 @@ const TreadMillGrid = () => {
           start_time: fullDateTime,
           is_booked: isBooked,
           is_past: isPast,
-          display_time: time.startsWith("nextDay")
-            ? `다음날 ${time.substring(7)}`
-            : time,
-          is_next_day: time.startsWith("nextDay"),
+          display_time: displayTime,
         };
       });
-
       setTimeSlots(allSlots);
     } catch (error) {
       console.error("시간 슬롯 불러오기 실패", error);
@@ -190,29 +120,20 @@ const TreadMillGrid = () => {
 
   const fetchStatuses = async () => {
     try {
-      const treadMillRes = await axios.get(
-        `${API_BASE_URL}api/v1/gym/treadmills/`,
-        {
-          headers: {
-            "X-CSRFToken": getCookie("csrftoken") || "",
-          },
-          withCredentials: true,
-        }
-      );
+      const res = await fetchTreadmillStatuses();
 
-      const apiData = treadMillRes.data;
-
+      const apiData = res.data;
       const mergedStatuses = itemsLayout.map((localItem) => {
         const found = apiData.find(
           (apiItem) =>
             apiItem.type === localItem.type &&
-            apiItem.number === localItem.number
+            apiItem.number === localItem.number &&
+            apiItem.pk === localItem.pk
         );
         return found
           ? { ...localItem, ...found }
           : { ...localItem, is_available: false, is_using: false };
       });
-
       setStatuses(mergedStatuses);
     } catch (error) {
       console.error("아이템 상태 API 호출 실패", error);
@@ -231,30 +152,35 @@ const TreadMillGrid = () => {
   }, []);
 
   useEffect(() => {
-    fetchSlotsForSelectedItem();
+    if (selectedItem && selectedDate) {
+      fetchSlotsForSelectedItem();
+    }
   }, [selectedDate, selectedItem]);
 
-  const handleClick = (itemData) => {
-    if (!itemData || itemData.is_available === null) {
+  const handleClick = (itemDataFromLayout) => {
+    const currentItemStatus = statuses.find(
+      (s) => s && s.pk === itemDataFromLayout.pk
+    );
+
+    if (!currentItemStatus) {
       alert("아이템 상태를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
       return;
     }
-
-    if (itemData.is_available === false) {
-      alert("이 아이템은 현재 사용할 수 없습니다.");
+    if (currentItemStatus.is_available === false) {
+      alert("이 아이템은 현재 사용할 수 없습니다 (수리중).");
       return;
     }
 
     const today = new Date();
-    today.setHours(0, 0, 0, 0);
-
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, "0");
     const day = String(today.getDate()).padStart(2, "0");
     const formattedToday = `${year}-${month}-${day}`;
 
     setSelectedDate(formattedToday);
-    setSelectedItem(itemData);
+
+    setSelectedItem(currentItemStatus);
+
     setIsModalOpen(true);
   };
 
@@ -264,52 +190,50 @@ const TreadMillGrid = () => {
 
   return (
     <div className="main-grid-container">
-      {itemsLayout.map((item, index) => {
-        const statusData = statuses[index];
+      {/* START_MODIFIED_SECTION */}
+      {statuses.map((itemStatus, index) => {
+        if (!itemStatus) return null;
 
-        let displayName = `트레드밀 ${item.number}`;
-
+        let displayName = `트레드밀 ${itemStatus.number}`;
         let backgroundColor;
-        if (statusData === null) {
-          backgroundColor = "gray";
-        } else if (!statusData.is_available) {
-          backgroundColor = "green"; // 또는 회색
-        } else if (statusData.is_using) {
+
+        if (itemStatus.is_using === true) {
           backgroundColor = "red";
+        } else if (itemStatus.is_available === false) {
+          backgroundColor = "yellow";
         } else {
           backgroundColor = "green";
         }
 
         return (
           <div
-            key={index}
-            className={`item-box ${item.type}`}
+            key={itemStatus.pk || index}
+            className={`item-box ${itemStatus.type}`}
             style={{
-              ...item.style,
+              ...itemStatus.style,
               position: "absolute",
               backgroundColor,
-              cursor: "pointer",
+              cursor:
+                itemStatus.is_available === false ? "not-allowed" : "pointer",
             }}
-            onClick={() => handleClick(item)}
+            onClick={() => handleClick(itemStatus)}
           >
             {displayName}
           </div>
         );
       })}
+      {/* END_MODIFIED_SECTION */}
 
       {isModalOpen && selectedItem && (
         <div className="modal-overlay">
           <div className="modal">
             <h2>트레드밀 {selectedItem.number}번</h2>
-
             <select onChange={handleDateChange} value={selectedDate || ""}>
               {Array.from({ length: 7 }).map((_, idx) => {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
-
                 const dateOption = new Date(today);
                 dateOption.setDate(today.getDate() + idx);
-
                 const year = dateOption.getFullYear();
                 const month = String(dateOption.getMonth() + 1).padStart(
                   2,
@@ -317,11 +241,9 @@ const TreadMillGrid = () => {
                 );
                 const day = String(dateOption.getDate()).padStart(2, "0");
                 const formattedDate = `${year}-${month}-${day}`;
-
                 const weekday = dateOption.toLocaleDateString("ko-KR", {
                   weekday: "short",
                 });
-
                 return (
                   <option key={idx} value={formattedDate}>
                     {formattedDate} ({weekday})
@@ -354,18 +276,12 @@ const TreadMillGrid = () => {
                         }
                       }}
                     >
-                      {slot.display_time.includes("nextDay")
-                        ? `다음날 ${slot.display_time.replace("nextDay", "")}`
-                        : new Date(slot.start_time).toLocaleTimeString([], {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
+                      {slot.display_time}
                     </li>
                   ))}
                 </ul>
               </div>
             )}
-
             <button onClick={() => setIsModalOpen(false)}>닫기</button>
           </div>
         </div>
