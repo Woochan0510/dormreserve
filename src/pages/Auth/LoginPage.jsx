@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../styles/LoginPage.css";
 import API_BASE_URL from "../../config/api";
+import KWLogo from "../../assets/images/kw_logo_word_mark.jpg";
 
 function Login() {
   const navigate = useNavigate();
@@ -76,11 +77,7 @@ function Login() {
     <div className="login-page-container">
       <div className="login-form-container">
         <div className="login-header">
-          <img
-            src="/kw_logo.svg"
-            alt="광운대학교 로고"
-            className="login-logo"
-          />
+          <img src={KWLogo} alt="광운대학교 로고" className="login-logo" />
           <h1 className="login-title">광운대학교 행복기숙사</h1>
           <p className="login-subtitle">시설 예약 시스템</p>
         </div>
