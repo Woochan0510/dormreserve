@@ -1,38 +1,46 @@
-/* src/styles/CookGrid.css (CookGrid 컴포넌트 내부 스타일) */
+/* src/styles/CookGrid.css */
 .cook-grid-layout {
   display: flex;
-  justify-content: space-around;
-  align-items: flex-start;
-  width: 100%; /* 부모(.map)의 너비를 따름 */
-  /* min-width: 480px; */ /* 페이지 전체 가로 스크롤을 없애기 위해 이 줄 제거 또는 조정 */
-  height: auto; /* 내용에 따라 높이 결정 */
+  flex-direction: row; /* 기본적으로 가로 배치 (컬럼들 side-by-side) */
+  justify-content: space-around; /* 컬럼 간 균등 간격 */
+  align-items: flex-start; /* 컬럼들 상단 정렬 */
+  width: 100%;
+  height: 100%; /* 부모(.map)의 높이를 채우도록 시도 */
   padding: 15px;
   box-sizing: border-box;
-  gap: 15px; /* 스테이션 컬럼 간 간격, 반응형에서 조절 가능 */
+  gap: 20px; /* 컬럼(스테이션) 간의 간격 */
+  flex-wrap: wrap; /* 작은 화면에서 컬럼들이 줄바꿈 되도록 */
 }
 
 .induction-station-column {
+  /* 각 스테이션(컬럼) */
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 15px;
-  flex: 1 1 0; /* flex-grow, flex-shrink, flex-basis. 컬럼이 줄어들 수 있도록 */
-  min-width: 100px; /* 각 컬럼의 최소 너비, 이 값에 따라 그리드 전체의 최소 너비가 결정됨 */
+  flex-direction: column; /* 내부 그룹들을 세로로 쌓음 */
+  align-items: center; /* 그룹들을 컬럼 내에서 가운데 정렬 */
+  gap: 20px; /* 그룹 간의 세로 간격 */
+  flex: 1 1 calc(50% - 10px); /* 두 개의 컬럼이 공간을 나누어 가짐 (gap 고려) */
+  max-width: calc(50% - 10px); /* 두 개의 컬럼 */
+  min-width: 250px; /* 각 컬럼의 최소 너비, 내용에 따라 조정 */
   padding: 10px;
   box-sizing: border-box;
+  /* border: 1px dashed blue; /* DEBUG */
 }
 
 .induction-group-container {
+  /* 인덕션 그룹 (예: 상단 2개, 하단 2개 묶음) */
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  flex-direction: column; /* 내부 인덕션들을 세로로 쌓음 */
+  gap: 10px; /* 인덕션 간의 간격 */
   border: 1px solid #b0b0b0;
-  padding: 10px;
+  padding: 15px;
   border-radius: 8px;
   background-color: #f8f8f8;
-  width: 100%;
-  max-width: 150px; /* 이 값은 유지하여 개별 그룹 크기 제어 */
+  width: 100%; /* 스테이션 컬럼 너비에 맞춤 */
+  /* max-width: 220px; /* 그룹 최대 너비, 필요시 조정 */
+  min-height: 180px; /* 그룹 최소 높이, 내부 인덕션 2개가 충분히 보이도록 */
   box-sizing: border-box;
+  justify-content: space-around; /* 내부 인덕션들 공간 균등 분배 */
+  align-items: center;
 }
 
 .induction-group-container.empty-group {
@@ -40,13 +48,13 @@
   background-color: #fdfdfd;
 }
 .induction-group-container.empty-group .induction-hob {
-  visibility: hidden;
+  visibility: hidden; /* 실제로는 empty-group을 사용하지 않게 될 것 */
 }
 
 .induction-hob {
-  width: 100%;
-  min-height: 65px;
-  padding: 10px;
+  width: 95%; /* 그룹 컨테이너 내부에서 너비 */
+  min-height: 70px; /* 높이 증가 */
+  padding: 12px; /* 패딩 증가 */
   border: 2px solid #555;
   background-color: #e0e0e0;
   display: flex;
@@ -76,48 +84,37 @@
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
 }
 
+/* 반응형 스타일 */
 @media (max-width: 768px) {
   .cook-grid-layout {
-    gap: 10px; /* 화면 작을 때 컬럼 간 간격 줄임 */
-    padding: 10px;
-    /* flex-direction: column; */ /* 만약 컬럼을 세로로 쌓고 싶다면 이 주석 해제, 아니면 가로 스크롤 허용 */
-    /* align-items: center; */
+    flex-direction: column; /* 작은 화면에서는 컬럼들을 세로로 쌓음 */
+    align-items: center; /* 컬럼들을 가운데 정렬 */
+    gap: 20px; /* 세로 간격 */
+    height: auto; /* 내용에 따라 높이 자동 조절 */
   }
   .induction-station-column {
-    /* flex-basis: 100%; */ /* 컬럼 세로 쌓기 시 */
-    min-width: 90px; /* 더 작은 화면에서 컬럼 최소 너비 줄임 */
-  }
-  .induction-group-container {
-    max-width: 130px;
-    padding: 8px;
-    gap: 6px;
-  }
-  .induction-hob {
-    min-height: 60px;
-    font-size: 1em;
+    flex-basis: auto; /* 컬럼 너비 자동 조정 */
+    width: 100%; /* 컬럼이 전체 너비 사용 */
+    max-width: 400px; /* 컬럼 최대 너비 제한 (선택 사항) */
+    min-width: unset;
+    flex: 1 1 100%; /* 모바일에서 한 컬럼씩 전체 너비 */
   }
 }
 
 @media (max-width: 480px) {
-  .cook-grid-layout {
-    gap: 5px;
-    padding: 5px;
-  }
-  .induction-station-column {
-    min-width: 80px;
-  }
   .induction-group-container {
-    max-width: 110px; /* 혹은 100%로 변경하여 컬럼 너비에 맞춤 */
-    padding: 6px;
-    gap: 5px;
+    padding: 10px;
+    gap: 8px;
+    min-height: 150px;
   }
   .induction-hob {
-    min-height: 55px;
-    font-size: 0.9em;
+    min-height: 60px;
+    font-size: 1em;
+    padding: 10px;
   }
 }
 
-/* 모달 스타일은 이전과 동일하게 유지 (주석 제거) */
+/* 모달 스타일은 기존 CookGrid.css의 것을 그대로 사용합니다. */
 .modal-overlay {
   position: fixed;
   top: 0;
