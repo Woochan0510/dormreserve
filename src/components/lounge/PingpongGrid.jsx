@@ -13,7 +13,14 @@ const PingPongGrid = () => {
     { type: "pingPongTable", number: 2, pk: 2, name: "탁구대 2" },
   ];
 
-  const [statuses, setStatuses] = useState([]);
+  const [statuses, setStatuses] = useState(
+    pingPongTableDefinitions.map((def) => ({
+      ...def,
+      is_available: null,
+      is_using: null,
+      isLoading: true,
+    }))
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
@@ -137,8 +144,10 @@ const PingPongGrid = () => {
         const apiStatus = apiData.find((apiItem) => apiItem.pk === def.pk);
         return {
           ...def,
-          is_available: apiStatus ? apiStatus.is_available : false,
-          is_using: apiStatus ? apiStatus.is_using : false,
+          is_available: apiStatus ? apiStatus.is_available : null,
+          is_using: apiStatus ? apiStatus.is_using : null,
+          isLoading: false,
+          apiMissing: !apiStatus,
         };
       });
       setStatuses(newStatuses);
@@ -147,8 +156,10 @@ const PingPongGrid = () => {
       setStatuses(
         pingPongTableDefinitions.map((def) => ({
           ...def,
-          is_available: false,
-          is_using: false,
+          is_available: null,
+          is_using: null,
+          isLoading: false,
+          fetchFailed: true,
         }))
       );
     }
@@ -165,12 +176,16 @@ const PingPongGrid = () => {
   }, [selectedDate, selectedItem]);
 
   const handleClick = (itemData) => {
-    if (!itemData) {
-      alert("탁구대 정보를 가져오는 중입니다.");
+    if (itemData.isLoading || itemData.fetchFailed || itemData.apiMissing) {
+      alert("탁구대 정보를 가져오는 중이거나 상태를 확인할 수 없습니다.");
       return;
     }
     if (itemData.is_available === false) {
       alert("이 탁구대는 현재 사용할 수 없습니다 (수리중).");
+      return;
+    }
+    if (itemData.is_available === null) {
+      alert("탁구대 상태를 확인할 수 없습니다. 새로고침 후 다시 시도해주세요.");
       return;
     }
 
@@ -192,29 +207,48 @@ const PingPongGrid = () => {
   return (
     <div className="pingpong-grid-items-container">
       {statuses.map((itemStatus) => {
-        if (!itemStatus) return null;
+        let backgroundColor = "#BEBEBE"; // Medium gray for loading
+        let textColor = "#333333"; // Dark gray text
+        let cursor = "default";
+        const itemName = itemStatus.name || `탁구대 ${itemStatus.number}`;
+        let displayText = itemName;
 
-        let displayName = itemStatus.name || `탁구대 ${itemStatus.number}`;
-        let backgroundColor = "gray";
-        let cursor = "pointer";
-
-        if (itemStatus.is_using === true) {
-          backgroundColor = "red";
+        if (itemStatus.isLoading) {
+          displayText = "로딩중...";
+          cursor = "wait";
+        } else if (itemStatus.fetchFailed || itemStatus.apiMissing) {
+          displayText = `${itemName} (상태 확인 실패)`;
+          backgroundColor = "#D3D3D3"; // Light gray for error
         } else if (itemStatus.is_available === false) {
           backgroundColor = "yellow";
-          cursor = "not-allowed";
-        } else {
+        } else if (itemStatus.is_using === true) {
+          backgroundColor = "red";
+          textColor = "#FFFFFF";
+        } else if (itemStatus.is_available === true) {
           backgroundColor = "green";
+          textColor = "#FFFFFF";
+          cursor = "pointer";
         }
 
         return (
           <div
             key={itemStatus.pk}
-            className={`item-box pingPongTable`} // Use 'pingPongTable' for specific styling
-            style={{ backgroundColor, cursor }}
-            onClick={() => handleClick(itemStatus)}
+            className={`item-box pingPongTable`}
+            style={{ backgroundColor, cursor, color: textColor }}
+            onClick={() => {
+              if (
+                itemStatus.is_available === true &&
+                !itemStatus.isLoading &&
+                !itemStatus.fetchFailed &&
+                !itemStatus.apiMissing
+              ) {
+                handleClick(itemStatus);
+              } else if (itemStatus.is_available === false) {
+                alert(`이 ${itemName}(은)는 현재 사용할 수 없습니다 (수리중).`);
+              }
+            }}
           >
-            {displayName}
+            {displayText}
           </div>
         );
       })}

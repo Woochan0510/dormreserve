@@ -8,14 +8,19 @@ import {
 } from "../../services/bookingService";
 
 const ArcadeGrid = () => {
-  // itemsLayout defines the configuration of arcade machines
-  // pk should match the primary key from your backend for these items
   const arcadeMachineDefinitions = [
     { type: "arcadeTable", number: 1, pk: 1, name: "오락기 1" },
     { type: "arcadeTable", number: 2, pk: 2, name: "오락기 2" },
   ];
 
-  const [statuses, setStatuses] = useState([]); // Initialize as empty array
+  const [statuses, setStatuses] = useState(
+    arcadeMachineDefinitions.map((def) => ({
+      ...def,
+      is_available: null,
+      is_using: null,
+      isLoading: true,
+    }))
+  );
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
@@ -25,14 +30,12 @@ const ArcadeGrid = () => {
   const getTimeSlots = () => {
     const slots = [];
     for (let hour = 5; hour < 24; hour++) {
-      // 운영시간 05:00 부터
       for (let min = 0; min < 60; min += 30) {
         const hh = String(hour).padStart(2, "0");
         const mm = String(min).padStart(2, "0");
         slots.push(`${hh}:${mm}`);
       }
     }
-    // 다음날 00:00, 00:30 추가
     slots.push(`nextDay00:00`);
     slots.push(`nextDay00:30`);
     return slots;
@@ -47,8 +50,8 @@ const ArcadeGrid = () => {
     try {
       await reserveArcadeMachineSlotAPI(selectedItem.pk, startTime);
       alert("예약이 완료되었습니다.");
-      await fetchSlotsForSelectedItem(); // Refresh time slots
-      fetchStatuses(); // Refresh item statuses
+      await fetchSlotsForSelectedItem();
+      fetchStatuses();
     } catch (error) {
       console.error("예약 실패:", error);
       alert(
@@ -74,7 +77,6 @@ const ArcadeGrid = () => {
       const bookedSet = new Set(
         res.data.map((slot) => {
           const date = new Date(slot.start_time);
-          // Ensure consistent time formatting for matching
           const year = date.getFullYear();
           const month = String(date.getMonth() + 1).padStart(2, "0");
           const day = String(date.getDate()).padStart(2, "0");
@@ -91,7 +93,7 @@ const ArcadeGrid = () => {
         let displayTime = time;
 
         if (time.startsWith("nextDay")) {
-          const actualTime = time.substring(7); // "00:00" or "00:30"
+          const actualTime = time.substring(7);
           const nextDayDate = new Date(selectedDate);
           nextDayDate.setDate(new Date(selectedDate).getDate() + 1);
           const nextDayFormatted = `${nextDayDate.getFullYear()}-${String(
@@ -119,10 +121,10 @@ const ArcadeGrid = () => {
         const isBooked = bookedSet.has(fullDateTime);
 
         return {
-          start_time: fullDateTime, // For API
+          start_time: fullDateTime,
           is_booked: isBooked,
           is_past: isPast,
-          display_time: displayTime, // For UI
+          display_time: displayTime,
         };
       });
       setTimeSlots(allSlots);
@@ -138,25 +140,26 @@ const ArcadeGrid = () => {
     try {
       const res = await fetchArcadeMachineStatuses();
       const apiData = res.data;
-      // Map definitions to API data
       const newStatuses = arcadeMachineDefinitions.map((def) => {
         const apiStatus = apiData.find((apiItem) => apiItem.pk === def.pk);
         return {
-          ...def, // pk, number, name, type from definition
-          is_available: apiStatus ? apiStatus.is_available : false, // Default to not available if not found
-          is_using: apiStatus ? apiStatus.is_using : false, // Default to not using
-          // No 'style' property needed here anymore
+          ...def,
+          is_available: apiStatus ? apiStatus.is_available : null,
+          is_using: apiStatus ? apiStatus.is_using : null,
+          isLoading: false,
+          apiMissing: !apiStatus,
         };
       });
       setStatuses(newStatuses);
     } catch (error) {
       console.error("오락기 상태 API 호출 실패", error);
-      // Fallback: mark all as unavailable based on definitions
       setStatuses(
         arcadeMachineDefinitions.map((def) => ({
           ...def,
-          is_available: false,
-          is_using: false,
+          is_available: null,
+          is_using: null,
+          isLoading: false,
+          fetchFailed: true,
         }))
       );
     }
@@ -173,12 +176,16 @@ const ArcadeGrid = () => {
   }, [selectedDate, selectedItem]);
 
   const handleClick = (itemData) => {
-    if (!itemData) {
-      alert("오락기 정보를 가져오는 중입니다.");
+    if (itemData.isLoading || itemData.fetchFailed || itemData.apiMissing) {
+      alert("오락기 정보를 가져오는 중이거나 상태를 확인할 수 없습니다.");
       return;
     }
     if (itemData.is_available === false) {
       alert("이 오락기는 현재 사용할 수 없습니다 (수리중).");
+      return;
+    }
+    if (itemData.is_available === null) {
+      alert("오락기 상태를 확인할 수 없습니다. 새로고침 후 다시 시도해주세요.");
       return;
     }
 
@@ -189,7 +196,7 @@ const ArcadeGrid = () => {
     const formattedToday = `${year}-${month}-${day}`;
 
     setSelectedDate(formattedToday);
-    setSelectedItem(itemData); // itemData already contains pk, number, name
+    setSelectedItem(itemData);
     setIsModalOpen(true);
   };
 
@@ -200,29 +207,48 @@ const ArcadeGrid = () => {
   return (
     <div className="arcade-grid-items-container">
       {statuses.map((itemStatus) => {
-        if (!itemStatus) return null; // Should not happen if statuses is initialized and populated correctly
+        let backgroundColor = "#BEBEBE"; // Medium gray for loading
+        let textColor = "#333333"; // Dark gray text
+        let cursor = "default";
+        const itemName = itemStatus.name || `오락기 ${itemStatus.number}`;
+        let displayText = itemName;
 
-        let displayName = itemStatus.name || `오락기 ${itemStatus.number}`;
-        let backgroundColor = "gray"; // Default/loading
-        let cursor = "pointer";
-
-        if (itemStatus.is_using === true) {
-          backgroundColor = "red";
+        if (itemStatus.isLoading) {
+          displayText = "로딩중...";
+          cursor = "wait";
+        } else if (itemStatus.fetchFailed || itemStatus.apiMissing) {
+          displayText = `${itemName} (상태 확인 실패)`;
+          backgroundColor = "#D3D3D3"; // Light gray for error
         } else if (itemStatus.is_available === false) {
           backgroundColor = "yellow";
-          cursor = "not-allowed";
-        } else {
+        } else if (itemStatus.is_using === true) {
+          backgroundColor = "red";
+          textColor = "#FFFFFF";
+        } else if (itemStatus.is_available === true) {
           backgroundColor = "green";
+          textColor = "#FFFFFF";
+          cursor = "pointer";
         }
 
         return (
           <div
             key={itemStatus.pk}
-            className={`item-box arcadeTable`} // Use 'arcadeTable' for specific styling if needed
-            style={{ backgroundColor, cursor }}
-            onClick={() => handleClick(itemStatus)}
+            className={`item-box arcadeTable`}
+            style={{ backgroundColor, cursor, color: textColor }}
+            onClick={() => {
+              if (
+                itemStatus.is_available === true &&
+                !itemStatus.isLoading &&
+                !itemStatus.fetchFailed &&
+                !itemStatus.apiMissing
+              ) {
+                handleClick(itemStatus);
+              } else if (itemStatus.is_available === false) {
+                alert(`이 ${itemName}(은)는 현재 사용할 수 없습니다 (수리중).`);
+              }
+            }}
           >
-            {displayName}
+            {displayText}
           </div>
         );
       })}
@@ -277,7 +303,7 @@ const ArcadeGrid = () => {
                           color: slot.is_booked
                             ? "red"
                             : slot.is_past
-                            ? "grey" /* Ensure this matches CSS if needed */
+                            ? "grey"
                             : "green",
                           cursor:
                             slot.is_booked || slot.is_past

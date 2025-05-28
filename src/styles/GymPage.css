@@ -83,7 +83,7 @@
   align-items: center;
   border: 2px solid #555;
   font-weight: bold;
-  color: #fff;
+  /* color: #fff; Removed default white text color, will be set by inline style in JSX */
   border-radius: 8px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
   text-align: center;
