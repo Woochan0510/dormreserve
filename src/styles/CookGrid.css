@@ -1,56 +1,54 @@
-/* src/styles/CookGrid.css */
+/* src/styles/CookGrid.css (CookGrid 컴포넌트 내부 스타일) */
 .cook-grid-layout {
   display: flex;
   justify-content: space-around;
   align-items: flex-start;
-  width: 100%;
-  /* min-width 설정: 3개의 스테이션 컬럼과 간격을 고려한 최소 너비. 필요시 조정. */
-  min-width: 480px; /* 예: (hob max-width 120px + group padding 16px + station padding 20px) * 2 + empty station min-width + gaps */
-  height: 100%;
+  width: 100%; /* 부모(.map)의 너비를 따름 */
+  /* min-width: 480px; */ /* 페이지 전체 가로 스크롤을 없애기 위해 이 줄 제거 또는 조정 */
+  height: auto; /* 내용에 따라 높이 결정 */
   padding: 15px;
   box-sizing: border-box;
-  gap: 20px; /* 스테이션 컬럼 간 간격 */
+  gap: 15px; /* 스테이션 컬럼 간 간격, 반응형에서 조절 가능 */
 }
 
 .induction-station-column {
   display: flex;
-  flex-direction: column; /* 그룹들을 세로로 쌓음 */
+  flex-direction: column;
   align-items: center;
-  gap: 15px; /* 인덕션 그룹들 사이의 간격 */
-  flex: 1; /* 공간을 균등하게 차지하도록 하지만, cook-grid-layout의 min-width에 의해 제한됨 */
-  min-width: 0; /* flex 아이템이 내용물 크기 이하로 줄어들 수 있도록 */
+  gap: 15px;
+  flex: 1 1 0; /* flex-grow, flex-shrink, flex-basis. 컬럼이 줄어들 수 있도록 */
+  min-width: 100px; /* 각 컬럼의 최소 너비, 이 값에 따라 그리드 전체의 최소 너비가 결정됨 */
   padding: 10px;
   box-sizing: border-box;
-  /* border: 1px dashed #ddd; */ /* 시각화를 위한 임시 테두리 */
 }
 
 .induction-group-container {
   display: flex;
-  flex-direction: column; /* 그룹 내 인덕션들을 세로로 쌓음 (1번 위, 2번 아래) */
-  gap: 8px; /* 한 쌍의 인덕션(1,2) 사이의 간격 */
-  border: 1px solid #b0b0b0; /* 그룹을 감싸는 테두리 */
+  flex-direction: column;
+  gap: 8px;
+  border: 1px solid #b0b0b0;
   padding: 10px;
-  border-radius: 8px; /* 그룹 컨테이너의 모서리 둥글게 */
-  background-color: #f8f8f8; /* 그룹 컨테이너 배경색 */
-  width: 100%; /* 스테이션 컬럼 너비에 맞춤 */
-  max-width: 150px; /* 그룹 컨테이너 최대 너비 */
+  border-radius: 8px;
+  background-color: #f8f8f8;
+  width: 100%;
+  max-width: 150px; /* 이 값은 유지하여 개별 그룹 크기 제어 */
   box-sizing: border-box;
 }
 
 .induction-group-container.empty-group {
   border-color: #e0e0e0;
-  background-color: #fdfdfd; /* 빈 그룹은 더 밝게 */
+  background-color: #fdfdfd;
 }
 .induction-group-container.empty-group .induction-hob {
-  visibility: hidden; /* 빈 그룹 내의 hob은 보이지 않게 처리 */
+  visibility: hidden;
 }
 
 .induction-hob {
-  width: 100%; /* 그룹 컨테이너 너비에 꽉 참 */
+  width: 100%;
   min-height: 65px;
   padding: 10px;
   border: 2px solid #555;
-  background-color: #e0e0e0; /* 기본 색상 */
+  background-color: #e0e0e0;
   display: flex;
   justify-content: center;
   align-items: center;
@@ -67,8 +65,8 @@
 }
 
 .induction-hob.empty-hob {
-  background-color: transparent; /* 빈 hob은 투명하게 */
-  border-color: transparent; /* 빈 hob 테두리도 투명하게 */
+  background-color: transparent;
+  border-color: transparent;
   cursor: default;
   box-shadow: none;
 }
@@ -78,12 +76,16 @@
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
 }
 
-/* 반응형 스타일에서 flex-direction 변경 및 wrap 제거 - 스크롤을 위해 */
 @media (max-width: 768px) {
   .cook-grid-layout {
-    min-width: 420px; /* 화면이 줄어도 최소 너비 유지 시도 */
-    gap: 15px;
+    gap: 10px; /* 화면 작을 때 컬럼 간 간격 줄임 */
     padding: 10px;
+    /* flex-direction: column; */ /* 만약 컬럼을 세로로 쌓고 싶다면 이 주석 해제, 아니면 가로 스크롤 허용 */
+    /* align-items: center; */
+  }
+  .induction-station-column {
+    /* flex-basis: 100%; */ /* 컬럼 세로 쌓기 시 */
+    min-width: 90px; /* 더 작은 화면에서 컬럼 최소 너비 줄임 */
   }
   .induction-group-container {
     max-width: 130px;
@@ -98,11 +100,14 @@
 
 @media (max-width: 480px) {
   .cook-grid-layout {
-    min-width: 360px; /* 더 작은 화면에서의 최소 너비 */
-    gap: 10px;
+    gap: 5px;
+    padding: 5px;
+  }
+  .induction-station-column {
+    min-width: 80px;
   }
   .induction-group-container {
-    max-width: 110px;
+    max-width: 110px; /* 혹은 100%로 변경하여 컬럼 너비에 맞춤 */
     padding: 6px;
     gap: 5px;
   }
@@ -112,129 +117,169 @@
   }
 }
 
-/* Modal styles - 이전과 동일하게 유지 */
+/* 모달 스타일은 이전과 동일하게 유지 (주석 제거) */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.65);
+  background-color: rgba(0, 0, 0, 0.5);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  padding: 15px;
+  padding: 20px;
   box-sizing: border-box;
 }
 
 .modal {
-  background-color: white;
-  padding: 20px 25px;
-  border-radius: 8px;
-  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.25);
+  background-color: #ffffff;
+  padding: 25px 30px;
+  border-radius: 10px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
   width: 100%;
-  max-width: 480px;
+  max-width: 520px;
   max-height: 90vh;
   overflow-y: auto;
   display: flex;
   flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
 }
 
 .modal h2 {
   margin-top: 0;
-  margin-bottom: 15px;
-  font-size: 1.4em;
-  color: #333;
+  margin-bottom: 20px;
+  font-size: 1.6em;
+  color: #2c3e50;
   text-align: center;
+  font-weight: 600;
 }
 
 .modal label {
   display: block;
-  margin-bottom: 5px;
-  font-weight: 600;
-  font-size: 0.9em;
+  margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 0.95em;
+  color: #34495e;
 }
 
 .modal select {
   width: 100%;
-  padding: 10px;
-  margin-bottom: 15px;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  padding: 12px 15px;
+  margin-bottom: 25px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
   box-sizing: border-box;
-  font-size: 0.95em;
+  font-size: 1em;
+  background-color: #f8f9fa;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007bff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.4-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 15px center;
+  background-size: 12px;
+  cursor: pointer;
+}
+.modal select:focus {
+  border-color: #80bdff;
+  outline: 0;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
 }
 
-.time-slots h4 {
-  margin-top: 10px;
-  margin-bottom: 10px;
-  font-size: 1.1em;
+.time-slots-container {
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 20px;
+}
+
+.time-slots-container h4 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.2em;
+  color: #34495e;
   text-align: center;
+  font-weight: 500;
 }
 
-.time-slots ul {
+.loading-message {
+  color: #555;
+  font-style: italic;
+  padding: 20px 0;
+  text-align: center;
+  font-size: 0.9em;
+}
+
+.time-slots-container ul {
   list-style: none;
   padding: 0;
   margin: 0;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
-  gap: 6px;
-  max-height: 280px;
+  grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+  gap: 10px;
+  max-height: 300px;
   overflow-y: auto;
-  padding-right: 5px;
+  padding: 5px;
 }
 
-.time-slots li {
-  padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+.time-slots-container li {
+  padding: 10px 5px;
+  border: 1px solid #d1d8e0;
+  border-radius: 5px;
   text-align: center;
-  transition: background-color 0.2s, transform 0.1s;
+  transition: all 0.2s ease-in-out;
   font-size: 0.9em;
+  font-weight: 500;
+  word-break: keep-all;
 }
 
-.time-slots li:not([style*="not-allowed"]):hover {
-  background-color: #e9e9e9;
-  transform: scale(1.03);
+.time-slots-container li[style*="cursor: pointer"] {
+  background-color: #e9f5ff;
+  color: #007bff;
+  border-color: #a3d0ff;
+}
+.time-slots-container li[style*="cursor: pointer"]:hover {
+  background-color: #d0eaff;
+  border-color: #79bbff;
+  transform: translateY(-2px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+.time-slots-container li[style*="color: red"] {
+  background-color: #ffebee;
+  color: #c62828;
+  border-color: #ef9a9a;
+  text-decoration: line-through;
+}
+
+.time-slots-container li[style*="color: grey"] {
+  background-color: #f5f5f5;
+  color: #757575;
+  border-color: #e0e0e0;
+  text-decoration: line-through;
+}
+
+.modal select:disabled,
+.modal button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .modal-close-button {
-  padding: 10px 18px;
+  padding: 12px 20px;
   background-color: #6c757d;
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 6px;
   cursor: pointer;
-  font-size: 0.95em;
-  margin-top: 20px;
+  font-size: 1em;
+  margin-top: 15px;
   align-self: flex-end;
   font-weight: 500;
+  transition: background-color 0.2s ease;
 }
 
 .modal-close-button:hover {
   background-color: #5a6268;
-}
-
-.main-content-area {
-  /* SharedHeader를 제외한 컨텐츠 영역 */
-  flex-grow: 1; /* 남은 공간을 모두 채우도록 설정 */
-  display: flex;
-  flex-direction: column; /* 내부 요소들 수직 정렬 */
-  align-items: center;
-  justify-content: center; /* 중앙 정렬 (필요에 따라 조정) */
-  padding: 20px; /* 컨텐츠 영역 패딩 */
-  background-color: #fff; /* 페이지 배경색 (선택 사항) */
-}
-
-.map {
-  /* ... 기존 스타일 ... */
-  /* margin-bottom: auto; */ /* 다른 요소가 없다면 이것만으로 효과가 없을 수 있음 */
-  /* 이 경우, .main-content-area의 패딩을 조절하거나, .map의 높이를 좀 더 명확히 제어하는 것이 좋음 */
-  width: 90%;
-  max-width: 1000px;
-  max-height: 80vh; /* 예를 들어, 화면 높이에 따라 최대 높이 제한 */
-  overflow: auto;
-  /* ... 나머지 스타일 ... */
-  display: flex;
 }

@@ -12,22 +12,22 @@ const CookGrid = () => {
     {
       id: "station-1-left",
       groups: [
-        { id: "group-1-top", inductions: [1, 2] }, //  PKs: 1, 2
-        { id: "group-1-bottom", inductions: [3, 4] }, //  PKs: 3, 4
+        { id: "group-1-top", inductions: [1, 2] },
+        { id: "group-1-bottom", inductions: [3, 4] },
       ],
     },
     {
       id: "station-2-middle",
       groups: [
-        { id: "group-2-top", inductions: [5, 6] }, //  PKs: 5, 6
-        { id: "group-2-bottom", inductions: [7, 8] }, //  PKs: 7, 8
+        { id: "group-2-top", inductions: [5, 6] },
+        { id: "group-2-bottom", inductions: [7, 8] },
       ],
     },
     {
-      id: "station-3-right", // Visually empty column
+      id: "station-3-right",
       groups: [
-        { id: "group-3-top", inductions: [null, null] }, // Placeholder
-        { id: "group-3-bottom", inductions: [null, null] }, // Placeholder
+        { id: "group-3-top", inductions: [null, null] },
+        { id: "group-3-bottom", inductions: [null, null] },
       ],
     },
   ];
@@ -37,6 +37,7 @@ const CookGrid = () => {
   const [selectedInduction, setSelectedInduction] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
   const [timeSlots, setTimeSlots] = useState([]);
+  const [isTimeSlotsLoading, setIsTimeSlotsLoading] = useState(false); // 시간 슬롯 로딩 상태
 
   const getTimeSlots = () => {
     const slots = [];
@@ -73,6 +74,8 @@ const CookGrid = () => {
 
   const fetchSlotsForSelectedDateAndInduction = async () => {
     if (!selectedDate || !selectedInduction) return;
+    setIsTimeSlotsLoading(true); // 로딩 시작
+    setTimeSlots([]); // 이전 슬롯 초기화
     try {
       const res = await fetchInductionTimeSlots(
         selectedInduction,
@@ -105,7 +108,9 @@ const CookGrid = () => {
       setTimeSlots(allSlots);
     } catch (error) {
       console.error("시간 슬롯 불러오기 실패", error);
-      setTimeSlots([]);
+      setTimeSlots([]); // 에러 시 빈 배열로 설정
+    } finally {
+      setIsTimeSlotsLoading(false); // 로딩 완료
     }
   };
 
@@ -138,7 +143,7 @@ const CookGrid = () => {
     if (selectedInduction && selectedDate) {
       fetchSlotsForSelectedDateAndInduction();
     }
-  }, [selectedDate, selectedInduction]);
+  }, [selectedDate, selectedInduction]); // selectedInduction도 의존성 배열에 추가
 
   const handleInductionClick = (inductionPk) => {
     if (inductionPk === null) return;
@@ -159,6 +164,9 @@ const CookGrid = () => {
     const day = String(today.getDate()).padStart(2, "0");
     const formattedToday = `${year}-${month}-${day}`;
 
+    // 날짜가 변경되지 않았더라도, 다른 인덕션을 클릭하면 해당 인덕션의 시간표를 새로 가져와야 함.
+    // 만약 selectedDate가 이미 formattedToday와 같고, selectedInduction도 같다면 fetch를 또 할 필요는 없지만,
+    // 현재 로직은 selectedDate, selectedInduction이 변경될 때 useEffect에서 fetch하므로 괜찮음.
     setSelectedDate(formattedToday);
     setSelectedInduction(inductionPk);
     setIsModalOpen(true);
@@ -166,6 +174,9 @@ const CookGrid = () => {
 
   const handleDateChange = (e) => {
     setSelectedDate(e.target.value);
+    // 날짜 변경 시, timeSlots를 즉시 비우거나 로딩 상태로 만들어 사용자에게 피드백을 줄 수 있음
+    // setTimeSlots([]); // 옵션: 즉시 비우기
+    // setIsTimeSlotsLoading(true); // 옵션: 로딩 상태로 만들기 (useEffect에서 어차피 다시 fetch함)
   };
 
   const getInductionStyle = (inductionPk) => {
@@ -202,7 +213,6 @@ const CookGrid = () => {
             >
               {group.inductions.map((inductionPk, index) => (
                 <div
-                  // Use a unique key for each hob, including those in empty groups
                   key={
                     inductionPk !== null
                       ? `induction-${inductionPk}`
@@ -233,6 +243,7 @@ const CookGrid = () => {
               id="date-select"
               onChange={handleDateChange}
               value={selectedDate || ""}
+              disabled={isTimeSlotsLoading}
             >
               {Array.from({ length: 7 }).map((_, index) => {
                 const today = new Date();
@@ -258,46 +269,62 @@ const CookGrid = () => {
             </select>
 
             {selectedDate && (
-              <div className="time-slots">
+              <div className="time-slots-container">
+                {" "}
+                {/* 시간 슬롯 컨테이너 추가 */}
                 <h4>{selectedDate} 시간 선택</h4>
-                <ul>
-                  {timeSlots.map((slot, index) => (
-                    <li
-                      key={index}
-                      style={{
-                        color: slot.is_booked
-                          ? "red"
-                          : slot.is_past
-                          ? "grey"
-                          : "green",
-                        cursor:
-                          slot.is_booked || slot.is_past
-                            ? "not-allowed"
-                            : "pointer",
-                        backgroundColor: slot.is_booked
-                          ? "#ffdddd"
-                          : slot.is_past
-                          ? "#f0f0f0"
-                          : "#ddffdd",
-                      }}
-                      onClick={() => {
-                        if (!slot.is_booked && !slot.is_past) {
-                          reserveSlot(slot.start_time);
-                        }
-                      }}
-                    >
-                      {new Date(slot.start_time).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </li>
-                  ))}
-                </ul>
+                {isTimeSlotsLoading ? (
+                  <p className="loading-message">
+                    시간 정보를 불러오는 중입니다...
+                  </p>
+                ) : timeSlots.length > 0 ? (
+                  <ul>
+                    {timeSlots.map((slot, index) => (
+                      <li
+                        key={index}
+                        style={{
+                          color: slot.is_booked
+                            ? "red"
+                            : slot.is_past
+                            ? "grey"
+                            : "green",
+                          cursor:
+                            slot.is_booked || slot.is_past
+                              ? "not-allowed"
+                              : "pointer",
+                          backgroundColor: slot.is_booked
+                            ? "#ffdddd"
+                            : slot.is_past
+                            ? "#f0f0f0"
+                            : "#ddffdd",
+                        }}
+                        onClick={() => {
+                          if (
+                            !slot.is_booked &&
+                            !slot.is_past &&
+                            !isTimeSlotsLoading
+                          ) {
+                            // 로딩 중 클릭 방지
+                            reserveSlot(slot.start_time);
+                          }
+                        }}
+                      >
+                        {new Date(slot.start_time).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>예약 가능한 시간대가 없거나 불러올 수 없습니다.</p>
+                )}
               </div>
             )}
             <button
               onClick={() => setIsModalOpen(false)}
               className="modal-close-button"
+              disabled={isTimeSlotsLoading} // 로딩 중 닫기 버튼 비활성화 (선택 사항)
             >
               닫기
             </button>
