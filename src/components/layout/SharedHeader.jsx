@@ -1,11 +1,18 @@
 // src/components/layout/SharedHeader.jsx
-import React from "react";
+import React, { useState } from "react"; // useState 임포트
 import { useNavigate, Link } from "react-router-dom";
-import { logoutUser } from "../../services/authService";
-import "../../styles/SharedHeader.css"; // 공통 헤더 스타일 파일
+import { logoutUser, changePassword } from "../../services/authService"; // changePassword 임포트
+import "../../styles/SharedHeader.css";
 
 const SharedHeader = ({ pageTitle, showLegend = false }) => {
   const navigate = useNavigate();
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [newPasswordCheck, setNewPasswordCheck] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [passwordSuccess, setPasswordSuccess] = useState("");
+  const [isPasswordChangeLoading, setIsPasswordChangeLoading] = useState(false);
 
   const handleLogout = async () => {
     try {
@@ -17,49 +24,181 @@ const SharedHeader = ({ pageTitle, showLegend = false }) => {
         "로그아웃 실패:",
         error.response ? error.response.data : error.message
       );
-      navigate("/");
+      navigate("/"); // 실패 시에도 로그인 페이지로 이동
+    }
+  };
+
+  const openPasswordModal = () => {
+    setIsPasswordModalOpen(true);
+    setOldPassword("");
+    setNewPassword("");
+    setNewPasswordCheck("");
+    setPasswordError("");
+    setPasswordSuccess("");
+  };
+
+  const closePasswordModal = () => {
+    setIsPasswordModalOpen(false);
+  };
+
+  const handleChangePassword = async (e) => {
+    e.preventDefault();
+    setPasswordError("");
+    setPasswordSuccess("");
+
+    if (!oldPassword || !newPassword || !newPasswordCheck) {
+      setPasswordError("모든 필드를 입력해주세요.");
+      return;
+    }
+    if (newPassword !== newPasswordCheck) {
+      setPasswordError("새 비밀번호와 새 비밀번호 확인이 일치하지 않습니다.");
+      setNewPassword("");
+      setNewPasswordCheck("");
+      return;
+    }
+    if (newPassword.length < 8) {
+      setPasswordError("새 비밀번호는 8자 이상이어야 합니다.");
+      setNewPassword("");
+      setNewPasswordCheck("");
+      return;
+    }
+
+    setIsPasswordChangeLoading(true);
+    try {
+      await changePassword(oldPassword, newPassword);
+      setPasswordSuccess("비밀번호가 성공적으로 변경되었습니다.");
+      setOldPassword("");
+      setNewPassword("");
+      setNewPasswordCheck("");
+      // 성공 후 몇 초 뒤 모달을 닫거나, 사용자가 직접 닫도록 둘 수 있습니다.
+      // setTimeout(closePasswordModal, 2000);
+    } catch (error) {
+      const errorMsg =
+        error.response?.data?.old_password ||
+        error.response?.data?.new_password ||
+        error.response?.data?.detail ||
+        "비밀번호 변경에 실패했습니다. 기존 비밀번호를 확인해주세요.";
+      setPasswordError(errorMsg);
+      setNewPassword("");
+      setNewPasswordCheck("");
+    } finally {
+      setIsPasswordChangeLoading(false);
     }
   };
 
   return (
-    <div className="shared-top-bar">
-      <div className="shared-top-bar-left-content">
-        <Link to="/main" className="main-link">
-          메인으로
-        </Link>
-        {pageTitle && <h1 className="page-title">{pageTitle}</h1>}
-      </div>
+    <>
+      <div className="shared-top-bar">
+        <div className="shared-top-bar-left-content">
+          <Link to="/main" className="main-link">
+            메인으로
+          </Link>
+          {pageTitle && <h1 className="page-title">{pageTitle}</h1>}
+        </div>
 
-      <div className="shared-top-bar-right-content">
-        {showLegend && (
-          <div className="legend-container">
-            <div className="legend-item">
-              <div className="circle" style={{ backgroundColor: "green" }} />
-              <span>사용가능</span>
+        <div className="shared-top-bar-right-content">
+          {showLegend && (
+            <div className="legend-container">
+              <div className="legend-item">
+                <div className="circle" style={{ backgroundColor: "green" }} />
+                <span>사용가능</span>
+              </div>
+              <div className="legend-item">
+                <div className="circle" style={{ backgroundColor: "red" }} />
+                <span>사용중</span>
+              </div>
+              <div className="legend-item">
+                <div className="circle" style={{ backgroundColor: "yellow" }} />
+                <span>수리중</span>
+              </div>
             </div>
-            <div className="legend-item">
-              <div className="circle" style={{ backgroundColor: "red" }} />
-              <span>사용중</span>
-            </div>
-            <div className="legend-item">
-              <div className="circle" style={{ backgroundColor: "yellow" }} />
-              <span>수리중</span>
-            </div>
+          )}
+          <div className="auth-buttons-container">
+            <button
+              className="password-change-button"
+              onClick={openPasswordModal} // 모달 열기 함수로 변경
+            >
+              비밀번호 변경
+            </button>
+            <button className="logout-button" onClick={handleLogout}>
+              로그아웃
+            </button>
           </div>
-        )}
-        <div className="auth-buttons-container">
-          <button
-            className="password-change-button"
-            onClick={() => alert("비밀번호 변경 기능은 준비중입니다.")}
-          >
-            비밀번호 변경
-          </button>
-          <button className="logout-button" onClick={handleLogout}>
-            로그아웃
-          </button>
         </div>
       </div>
-    </div>
+
+      {isPasswordModalOpen && (
+        <div className="modal-overlay" onClick={closePasswordModal}>
+          <div
+            className="modal password-change-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2>비밀번호 변경</h2>
+            <form onSubmit={handleChangePassword}>
+              <div className="input-group">
+                <label htmlFor="oldPassword">현재 비밀번호</label>
+                <input
+                  id="oldPassword"
+                  type="password"
+                  value={oldPassword}
+                  onChange={(e) => setOldPassword(e.target.value)}
+                  placeholder="현재 비밀번호"
+                  disabled={isPasswordChangeLoading}
+                />
+              </div>
+              <div className="input-group">
+                <label htmlFor="newPassword">새 비밀번호</label>
+                <input
+                  id="newPassword"
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="새 비밀번호 (8자 이상)"
+                  disabled={isPasswordChangeLoading}
+                />
+              </div>
+              <div className="input-group">
+                <label htmlFor="newPasswordCheck">새 비밀번호 확인</label>
+                <input
+                  id="newPasswordCheck"
+                  type="password"
+                  value={newPasswordCheck}
+                  onChange={(e) => setNewPasswordCheck(e.target.value)}
+                  placeholder="새 비밀번호 확인"
+                  disabled={isPasswordChangeLoading}
+                />
+              </div>
+              {passwordError && (
+                <p className="error-message">{passwordError}</p>
+              )}
+              {passwordSuccess && (
+                <p className="success-message">{passwordSuccess}</p>
+              )}
+              {isPasswordChangeLoading && (
+                <p className="loading-message">변경 중...</p>
+              )}
+              <div className="modal-buttons">
+                <button
+                  type="submit"
+                  className="modal-action-button"
+                  disabled={isPasswordChangeLoading}
+                >
+                  {isPasswordChangeLoading ? "변경 중..." : "변경하기"}
+                </button>
+                <button
+                  type="button"
+                  className="modal-close-button"
+                  onClick={closePasswordModal}
+                  disabled={isPasswordChangeLoading}
+                >
+                  닫기
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+    </>
   );
 };
 

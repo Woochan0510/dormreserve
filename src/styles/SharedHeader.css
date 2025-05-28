@@ -166,3 +166,161 @@
     font-size: 0.8rem;
   }
 }
+
+.modal-overlay {
+  /* 이미 CookGrid.css 등 다른 곳에 유사한 스타일이 있다면 중복될 수 있습니다. 공통 스타일로 관리하는 것을 고려하세요. */
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 15px;
+  box-sizing: border-box;
+}
+
+.modal {
+  /* 기본 모달 스타일, password-change-modal에서 세부 조정 */
+  background-color: #ffffff;
+  padding: 30px 35px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 450px; /* 비밀번호 변경 모달 너비 조정 */
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.password-change-modal h2 {
+  /* h2 태그 직접 타겟팅 또는 modal 내부 h2로 범위 지정 */
+  margin-top: 0;
+  margin-bottom: 25px;
+  font-size: 1.6em;
+  color: #333;
+  text-align: center;
+  font-weight: 600;
+}
+
+.password-change-modal .input-group {
+  margin-bottom: 18px;
+  text-align: left;
+}
+
+.password-change-modal label {
+  display: block;
+  font-size: 0.95em;
+  color: #555;
+  margin-bottom: 7px;
+  font-weight: 500;
+}
+
+.password-change-modal input[type="password"] {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  box-sizing: border-box;
+  font-size: 1em;
+  transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.password-change-modal input[type="password"]:focus {
+  border-color: #0056b3; /* 광운대 색상 활용 */
+  outline: none;
+  box-shadow: 0 0 0 0.2rem rgba(0, 86, 179, 0.25);
+}
+
+.password-change-modal .error-message {
+  color: #e74c3c; /* 빨간색 계열 */
+  font-size: 0.85em;
+  margin-top: -10px; /* 입력창과의 간격 조정 */
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.password-change-modal .success-message {
+  color: #2ecc71; /* 초록색 계열 */
+  font-size: 0.85em;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.password-change-modal .loading-message {
+  color: #3498db;
+  font-size: 0.85em;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.password-change-modal .modal-buttons {
+  display: flex;
+  justify-content: flex-end; /* 버튼을 오른쪽으로 정렬 */
+  gap: 10px; /* 버튼 사이 간격 */
+  margin-top: 25px;
+}
+
+.password-change-modal .modal-action-button,
+.password-change-modal .modal-close-button {
+  padding: 10px 20px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 0.95em;
+  font-weight: 500;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.password-change-modal .modal-action-button {
+  background-color: #0056b3; /* 주 작업 버튼 색상 */
+  color: white;
+}
+.password-change-modal .modal-action-button:hover {
+  background-color: #004494;
+}
+.password-change-modal .modal-action-button:disabled {
+  background-color: #a0c3e0;
+  cursor: not-allowed;
+}
+
+.password-change-modal .modal-close-button {
+  background-color: #6c757d; /* 보조/닫기 버튼 색상 */
+  color: white;
+}
+.password-change-modal .modal-close-button:hover {
+  background-color: #5a6268;
+}
+.password-change-modal .modal-close-button:disabled {
+  opacity: 0.6;
+}
+
+/* 기존 .modal-close-button 스타일이 있다면, 비밀번호 변경 모달에만 적용되도록 .password-change-modal 내부로 한정하거나,
+   새로운 클래스명을 사용할 수 있습니다. 여기서는 범위를 한정합니다. */
+
+/* 반응형 스타일 (SharedHeader.css 하단에 추가) */
+@media (max-width: 768px) {
+  /* ... 기존 반응형 스타일 ... */
+  .password-change-modal {
+    max-width: 90%; /* 모바일에서 모달 너비 조정 */
+    padding: 25px 20px;
+  }
+  .password-change-modal h2 {
+    font-size: 1.4em;
+  }
+  .password-change-modal .modal-buttons {
+    flex-direction: column; /* 모바일에서 버튼 세로로 쌓기 */
+  }
+  .password-change-modal .modal-action-button,
+  .password-change-modal .modal-close-button {
+    width: 100%; /* 버튼 너비 100% */
+    margin-top: 8px;
+  }
+  .password-change-modal .modal-buttons button:first-child {
+    margin-top: 0; /* 첫번째 버튼 상단 마진 제거 */
+  }
+}
