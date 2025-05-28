@@ -1,68 +1,323 @@
 /* src/styles/LoungePage.css */
+
+/* Ensure these base classes are available, e.g., from a global stylesheet or defined here */
+/* .base-page-container, .main-content-area are assumed to be similar to other pages */
 .base-page-container {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
 }
 
-/* .top_bar 등 SharedHeader 관련 스타일 제거 */
-
 .main-content-area {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start; /* Align content to the top */
   padding: 20px;
   background-color: #fff;
 }
 
 .map {
+  /* Common map styling */
   border: 2px solid black;
   width: 90%;
-  max-width: 1000px;
-  height: auto;
-  min-height: 400px;
-  aspect-ratio: 16 / 9;
+  max-width: 1000px; /* Max width for the map area */
+  min-height: 450px; /* Adjusted min-height */
   padding: 15px;
   box-sizing: border-box;
   background-color: #f9f9f9;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  display: flex; /* 내부 main_row 정렬 위함 */
+  /* display: flex; already handled by lounge-map-layout if used */
+  /* justify-content: center; */
+  /* align-items: center; */
+}
+
+.map.lounge-map-layout {
+  /* Target the map div specifically on the lounge page */
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around; /* Distributes space between the two columns */
+  align-items: flex-start; /* Aligns columns to the top */
+  width: 100%;
+  /* height: 100%; Let content define height or set a specific one */
+  padding: 20px;
+  box-sizing: border-box;
+  gap: 20px; /* Space between the arcade and ping-pong columns */
+}
+
+.lounge-section-column {
+  display: flex;
+  flex-direction: column; /* Items within a column are stacked vertically */
+  align-items: center; /* Center items horizontally within the column */
+  gap: 15px; /* Space between items within a column */
+  flex: 1; /* Each column takes up equal space */
+  padding: 15px;
+  border-radius: 8px;
+  background-color: #f0f2f5; /* Slightly different background for sections */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  min-width: 220px; /* Minimum width for a section column */
+}
+
+.section-title {
+  font-size: 1.4em; /* Increased size */
+  font-weight: 600; /* Bolder */
+  color: #4a5568; /* Darker grey for better readability */
+  margin-bottom: 20px;
+  text-align: center;
+  width: 100%;
+  padding-bottom: 12px; /* Increased padding */
+  border-bottom: 2px solid #e2e8f0; /* Thicker, lighter border */
+}
+
+/* Container for items within each grid component */
+.arcade-grid-items-container,
+.pingpong-grid-items-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center items like in the image */
+  width: 100%;
+  gap: 15px; /* Consistent gap */
+}
+
+/* Common item styling - can be refined or live in specific grid CSS */
+.item-box {
+  display: flex;
   justify-content: center;
   align-items: center;
+  border: 2px solid #666; /* Darker border */
+  font-weight: bold;
+  color: #fff; /* White text for better contrast on colored backgrounds */
+  border-radius: 8px; /* Slightly more rounded */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  text-align: center;
+  padding: 20px; /* More padding */
+  transition: transform 0.2s ease, box-shadow 0.2s ease,
+    background-color 0.3s ease;
+  min-height: 80px; /* Increased min-height */
+  box-sizing: border-box;
+  cursor: pointer;
 }
 
-.main_row {
-  /* ArcadeGrid와 PingPongGrid를 감싸는 div */
-  display: flex;
-  flex-direction: row; /* 기본적으로 가로 배치 */
-  align-items: stretch; /* 높이를 맞춤 */
-  justify-content: space-around; /* 간격 분배 */
-  width: 100%;
-  height: 100%;
-  flex-wrap: wrap; /* 작은 화면에서 줄바꿈 */
+.item-box:hover {
+  transform: translateY(-3px) scale(1.03); /* Enhanced hover effect */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-/* ArcadeGrid.css, PingpongGrid.css 와의 관계를 고려하여 중복 스타일 정리 */
+.arcadeTable {
+  width: 150px; /* Adjusted to be visually distinct */
+  height: 150px; /* Square */
+  font-size: 1em;
+}
 
+.pingPongTable {
+  width: 220px; /* Larger for ping pong tables */
+  height: 110px;
+  font-size: 1.1em;
+}
+
+/* Responsive adjustments */
 @media (max-width: 768px) {
-  .main-content-area {
-    padding: 15px;
+  .map.lounge-map-layout {
+    flex-direction: column;
+    align-items: center; /* Center columns when stacked */
   }
-  .map {
-    width: 95%;
-    min-height: 300px;
-    aspect-ratio: unset;
-    height: auto; /* 내용에 따라 자동 조절 */
+  .lounge-section-column {
+    width: 90%; /* Sections take more width */
+    max-width: 500px;
+    margin-bottom: 25px; /* More space when stacked */
   }
-  .main_row {
-    flex-direction: column; /* 작은 화면에서는 세로 배치 */
-    align-items: center;
+  .lounge-section-column:last-child {
+    margin-bottom: 0;
   }
-  .main_row > div {
-    /* ArcadeGrid, PingpongGrid */
-    margin-bottom: 15px; /* 세로 배치 시 간격 */
+  .arcadeTable {
+    width: 80%;
+    max-width: 180px; /* Adjust max-width for arcade on mobile */
+    height: auto;
+    min-height: 120px;
   }
+  .pingPongTable {
+    width: 90%;
+    max-width: 280px; /* Adjust max-width for pingpong on mobile */
+    height: auto;
+    min-height: 100px;
+  }
+}
+
+/* Modal styles - Copied/Adapted from CookGrid.css for consistency */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6); /* Darker overlay */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 15px; /* Padding for smaller screens */
+  box-sizing: border-box;
+}
+
+.modal {
+  background-color: #ffffff;
+  padding: 30px 35px; /* More padding */
+  border-radius: 12px; /* More rounded */
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); /* Stronger shadow */
+  width: 100%;
+  max-width: 550px; /* Slightly wider modal */
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+.modal h2 {
+  margin-top: 0;
+  margin-bottom: 25px;
+  font-size: 1.8em; /* Larger title */
+  color: #1a202c; /* Darker text */
+  text-align: center;
+  font-weight: 600;
+}
+
+.modal label {
+  display: block;
+  margin-bottom: 10px; /* More space */
+  font-weight: 500;
+  font-size: 1em;
+  color: #4a5568;
+}
+
+.modal select {
+  width: 100%;
+  padding: 14px 18px; /* Larger select */
+  margin-bottom: 30px; /* More space */
+  border: 1px solid #cbd5e0; /* Lighter border */
+  border-radius: 8px; /* More rounded */
+  box-sizing: border-box;
+  font-size: 1.05em;
+  background-color: #f7fafc;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%234A5568%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.4-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 18px center;
+  background-size: 10px; /* Smaller arrow */
+  cursor: pointer;
+}
+.modal select:focus {
+  border-color: #4299e1; /* Tailwind blue focus */
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5); /* Tailwind focus ring */
+}
+
+.time-slots-container {
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 25px;
+}
+
+.time-slots-container h4 {
+  margin-top: 0;
+  margin-bottom: 18px;
+  font-size: 1.3em;
+  color: #2d3748;
+  text-align: center;
+  font-weight: 500;
+}
+
+.loading-message {
+  /* Make sure this class is used in JSX for consistency */
+  color: #718096;
+  font-style: italic;
+  padding: 25px 0;
+  text-align: center;
+  font-size: 0.95em;
+}
+
+.time-slots-container ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(90px, 1fr)
+  ); /* Slightly wider items */
+  gap: 12px; /* More gap */
+  max-height: 320px; /* Increased max height */
+  overflow-y: auto;
+  padding: 8px; /* Padding around the list */
+  border: 1px solid #e2e8f0; /* Border for the list area */
+  border-radius: 6px;
+}
+
+.time-slots-container li {
+  padding: 12px 8px; /* More padding */
+  border: 1px solid #e2e8f0;
+  border-radius: 6px; /* More rounded */
+  text-align: center;
+  transition: all 0.2s ease-in-out;
+  font-size: 0.95em;
+  font-weight: 500;
+  word-break: keep-all; /* Prevents awkward text wrapping */
+}
+
+.time-slots-container li[style*="cursor: pointer"] {
+  /* Styles for available slots */
+  background-color: #ebf8ff; /* Lighter blue */
+  color: #2b6cb0; /* Darker blue text */
+  border-color: #90cdf4;
+}
+.time-slots-container li[style*="cursor: pointer"]:hover {
+  background-color: #bee3f8; /* Darker on hover */
+  border-color: #63b3ed;
+  transform: translateY(-2px);
+  box-shadow: 0 3px 7px rgba(0, 0, 0, 0.12);
+}
+
+/* Style for booked slots */
+.time-slots-container li[style*="color: red"] {
+  background-color: #fff5f5; /* Lighter red */
+  color: #c53030; /* Darker red text */
+  border-color: #fc8181;
+  text-decoration: line-through;
+}
+
+/* Style for past slots */
+.time-slots-container li[style*="color: grey"] {
+  /* Ensure JS uses 'grey' */
+  background-color: #edf2f7; /* Lighter grey */
+  color: #a0aec0; /* Darker grey text */
+  border-color: #e2e8f0;
+  text-decoration: line-through;
+}
+
+.modal select:disabled,
+.modal button:disabled {
+  opacity: 0.5; /* More pronounced disabled state */
+  cursor: not-allowed;
+}
+
+.modal-close-button {
+  padding: 14px 25px; /* Larger button */
+  background-color: #718096; /* Grey */
+  color: white;
+  border: none;
+  border-radius: 8px; /* More rounded */
+  cursor: pointer;
+  font-size: 1.05em;
+  margin-top: 20px;
+  align-self: flex-end;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.modal-close-button:hover {
+  background-color: #4a5568; /* Darker grey on hover */
 }
