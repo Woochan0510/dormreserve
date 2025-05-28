@@ -1,35 +1,12 @@
-html,
-body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-  box-sizing: border-box;
-  overflow: hidden;
+/* src/styles/CycleGrid.css */
+/* Removed html, body, and main-grid-container styles. */
+
+/* .item-box and .cycleTable are primarily styled in GymPage.css. */
+/* Add specific overrides here if needed for cycle items. */
+.item-box.cycleTable {
+  /* width: 60px; */ /* Example of original, now overridden by GymPage.css */
+  /* height: 13%; */ /* Example of original, now overridden by GymPage.css */
+  /* Add any specific visual distinctions for cycles if GymPage.css .item-box is too generic */
 }
 
-.main-grid-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100vw;
-  height: 100vh;
-  position: relative;
-  overflow: hidden;
-}
-
-.item-box {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  border: 1px solid #333;
-  font-weight: bold;
-  color: #333;
-  border-radius: 5px;
-  box-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-.cycleTable {
-  width: 60px;
-  height: 13%;
-}
+/* Modal styles are inherited from GymPage.css. */

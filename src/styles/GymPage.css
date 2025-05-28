@@ -5,25 +5,23 @@
   min-height: 100vh;
 }
 
-/* .top_bar 등 SharedHeader 관련 스타일 제거 */
-
 .main-content-area {
   flex-grow: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start; /* Align content to the top */
   padding: 20px;
   background-color: #fff;
 }
 
 .map {
+  /* Common map styling */
   border: 2px solid black;
   width: 90%;
-  max-width: 1000px;
-  height: auto;
-  min-height: 400px;
-  aspect-ratio: 16 / 9;
+  max-width: 1000px; /* Max width for the map area */
+  /* min-height: 450px; /* Adjusted: Let content define height or use auto/fit-content */
+  min-height: fit-content; /* Or auto, or remove if not needed */
   padding: 15px;
   box-sizing: border-box;
   background-color: #f9f9f9;
@@ -31,23 +29,288 @@
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
-.map .w-full {
-  /* TreadMillGrid, CycleGrid를 감싸는 div */
+.map.gym-map-layout {
+  /* Specific layout for gym page */
   display: flex;
-  flex-direction: column; /* 내부 그리드들을 수직으로 쌓음 */
-  height: 100%; /* 부모 높이 전체 사용 */
+  flex-direction: column; /* Stack treadmill and cycle sections vertically */
+  gap: 30px; /* Space between treadmill and cycle sections */
+  padding: 20px;
+  box-sizing: border-box; /* Ensure padding doesn't add to width causing overflow */
 }
 
-/* TreadMillGrid.css, CycleGrid.css 와의 관계를 고려하여 중복 스타일 정리 */
+.gym-section {
+  width: 100%;
+  padding: 20px;
+  border-radius: 8px;
+  background-color: #f0f2f5; /* Light background for the section */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box; /* Ensure padding doesn't add to width */
+}
 
+.treadmill-section {
+  /* Specific styles for treadmill section if any */
+}
+
+.cycle-section {
+  /* Specific styles for cycle section if any */
+}
+
+.section-title {
+  font-size: 1.6em; /* Larger title for sections */
+  font-weight: 600;
+  color: #334155; /* Darker, slightly desaturated blue */
+  margin-bottom: 25px;
+  text-align: center;
+  width: 100%;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #cbd5e0; /* Slightly more prominent border */
+}
+
+.gym-items-row-container {
+  display: flex;
+  flex-direction: row; /* Arrange items horizontally */
+  flex-wrap: wrap; /* Allow items to wrap to the next line */
+  justify-content: center; /* Center items in the row */
+  gap: 15px; /* Reduced gap slightly */
+  width: 100%; /* Ensure it doesn't overflow its parent section */
+  box-sizing: border-box;
+}
+
+/* Common item styling, similar to LoungePage and CookPage */
+.item-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: 2px solid #555;
+  font-weight: bold;
+  color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+  text-align: center;
+  padding: 15px; /* Adjusted padding */
+  transition: transform 0.2s ease, box-shadow 0.2s ease,
+    background-color 0.3s ease;
+  min-height: 70px; /* Adjusted min-height */
+  box-sizing: border-box;
+  cursor: pointer;
+  flex-grow: 0; /* Prevent items from growing too much */
+  flex-shrink: 0; /* Prevent items from shrinking too much if not wrapping */
+}
+
+.item-box:hover {
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Historical class from your CycleGrid.css and TreadMillGrid.css */
+.cycleTable {
+  width: 100px;
+  height: 100px; /* Fixed height */
+  font-size: 0.9em;
+}
+
+/* Responsive adjustments for GymPage layout */
 @media (max-width: 768px) {
-  .main-content-area {
+  .map.gym-map-layout {
+    padding: 10px; /* Reduced padding for smaller screens */
+  }
+  .gym-section {
     padding: 15px;
   }
-  .map {
-    width: 95%;
-    min-height: 300px;
-    aspect-ratio: unset;
-    height: 70vh;
+  .gym-items-row-container {
+    gap: 10px; /* Smaller gap on tablets */
+    justify-content: space-around;
   }
+  .item-box.cycleTable {
+    width: calc(33.333% - 10px); /* Aim for 3 items per row on tablets */
+    max-width: 110px; /* Max size for tablet items */
+    min-height: 90px;
+    padding: 10px;
+    font-size: 0.8em;
+  }
+}
+
+@media (max-width: 480px) {
+  .item-box.cycleTable {
+    width: calc(50% - 8px); /* Two items per row on very small screens */
+    max-width: 100px;
+    min-height: 80px;
+    font-size: 0.75em;
+  }
+  .section-title {
+    font-size: 1.3em;
+    margin-bottom: 20px;
+  }
+  .gym-items-row-container {
+    gap: 8px;
+  }
+}
+
+/* Modal styles - Copied/Adapted from CookGrid.css/LoungePage.css for consistency */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 15px;
+  box-sizing: border-box;
+}
+
+.modal {
+  background-color: #ffffff;
+  padding: 30px 35px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  max-width: 550px;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, sans-serif;
+}
+
+.modal h2 {
+  margin-top: 0;
+  margin-bottom: 25px;
+  font-size: 1.8em;
+  color: #1a202c;
+  text-align: center;
+  font-weight: 600;
+}
+
+.modal label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: 500;
+  font-size: 1em;
+  color: #4a5568;
+}
+
+.modal select {
+  width: 100%;
+  padding: 14px 18px;
+  margin-bottom: 30px;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
+  box-sizing: border-box;
+  font-size: 1.05em;
+  background-color: #f7fafc;
+  appearance: none;
+  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%234A5568%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.4-12.8z%22%2F%3E%3C%2Fsvg%3E");
+  background-repeat: no-repeat;
+  background-position: right 18px center;
+  background-size: 10px;
+  cursor: pointer;
+}
+.modal select:focus {
+  border-color: #4299e1;
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
+}
+
+.time-slots-container {
+  min-height: 150px;
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 25px;
+}
+
+.time-slots-container h4 {
+  margin-top: 0;
+  margin-bottom: 18px;
+  font-size: 1.3em;
+  color: #2d3748;
+  text-align: center;
+  font-weight: 500;
+}
+
+.loading-message {
+  color: #718096;
+  font-style: italic;
+  padding: 25px 0;
+  text-align: center;
+  font-size: 0.95em;
+}
+
+.time-slots-container ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 12px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding: 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+}
+
+.time-slots-container li {
+  padding: 12px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  text-align: center;
+  transition: all 0.2s ease-in-out;
+  font-size: 0.95em;
+  font-weight: 500;
+  word-break: keep-all;
+}
+
+.time-slots-container li[style*="cursor: pointer"] {
+  background-color: #ebf8ff;
+  color: #2b6cb0;
+  border-color: #90cdf4;
+}
+.time-slots-container li[style*="cursor: pointer"]:hover {
+  background-color: #bee3f8;
+  border-color: #63b3ed;
+  transform: translateY(-2px);
+  box-shadow: 0 3px 7px rgba(0, 0, 0, 0.12);
+}
+
+.time-slots-container li[style*="color: red"] {
+  background-color: #fff5f5;
+  color: #c53030;
+  border-color: #fc8181;
+  text-decoration: line-through;
+}
+
+.time-slots-container li[style*="color: grey"] {
+  background-color: #edf2f7;
+  color: #a0aec0;
+  border-color: #e2e8f0;
+  text-decoration: line-through;
+}
+
+.modal select:disabled,
+.modal button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.modal-close-button {
+  padding: 14px 25px;
+  background-color: #718096;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.05em;
+  margin-top: 20px;
+  align-self: flex-end;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+
+.modal-close-button:hover {
+  background-color: #4a5568;
 }

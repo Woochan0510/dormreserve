@@ -1,5 +1,6 @@
+// src/components/gym/CycleGrid.jsx
 import React, { useEffect, useState } from "react";
-import "../../styles/CycleGrid.css";
+import "../../styles/CycleGrid.css"; // Specific styles for cycle items if needed
 import {
   fetchCycleStatuses,
   fetchCycleTimeSlots,
@@ -7,40 +8,19 @@ import {
 } from "../../services/bookingService";
 
 const CycleGrid = () => {
-  const itemsLayout = [
-    {
-      type: "cycleTable",
-      number: 1,
-      pk: 1,
-      style: { top: "55%", left: "17%" },
-    },
-    {
-      type: "cycleTable",
-      number: 2,
-      pk: 2,
-      style: { top: "55%", left: "27%" },
-    },
-    {
-      type: "cycleTable",
-      number: 3,
-      pk: 3,
-      style: { top: "55%", left: "37%" },
-    },
-    {
-      type: "cycleTable",
-      number: 4,
-      pk: 4,
-      style: { top: "55%", left: "47%" },
-    },
+  const cycleDefinitions = [
+    { type: "cycle", number: 1, pk: 1, name: "사이클 1" },
+    { type: "cycle", number: 2, pk: 2, name: "사이클 2" },
+    { type: "cycle", number: 3, pk: 3, name: "사이클 3" },
+    { type: "cycle", number: 4, pk: 4, name: "사이클 4" },
   ];
 
-  const [statuses, setStatuses] = useState(
-    Array(itemsLayout.length).fill(null)
-  );
+  const [statuses, setStatuses] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState(null);
   const [selectedDate, setSelectedDate] = useState(null);
   const [timeSlots, setTimeSlots] = useState([]);
+  const [isTimeSlotsLoading, setIsTimeSlotsLoading] = useState(false);
 
   const getTimeSlots = () => {
     const slots = [];
@@ -58,12 +38,12 @@ const CycleGrid = () => {
 
   const reserveSlot = async (startTime) => {
     if (!selectedItem || selectedItem.pk === null) {
-      alert("예약할 아이템 정보가 불완전합니다.");
+      alert("예약할 사이클을 선택해주세요.");
       return;
     }
+    setIsTimeSlotsLoading(true);
     try {
       await reserveCycleSlotAPI(selectedItem.pk, startTime);
-
       alert("예약이 완료되었습니다.");
       await fetchSlotsForSelectedItem();
       fetchStatuses();
@@ -75,14 +55,17 @@ const CycleGrid = () => {
             error.message ||
             "알 수 없는 에러가 발생했습니다.")
       );
+    } finally {
+      setIsTimeSlotsLoading(false);
     }
   };
 
   const fetchSlotsForSelectedItem = async () => {
     if (!selectedDate || !selectedItem || selectedItem.pk === null) return;
+    setIsTimeSlotsLoading(true);
+    setTimeSlots([]);
     try {
       const res = await fetchCycleTimeSlots(selectedItem.pk, selectedDate);
-
       const bookedSet = new Set(
         res.data.map((slot) => {
           const date = new Date(slot.start_time);
@@ -118,9 +101,16 @@ const CycleGrid = () => {
         }
         slotDateTime = new Date(fullDateTime);
 
-        const isPast = slotDateTime < now;
-        const isBooked = bookedSet.has(fullDateTime);
+        const isPast =
+          slotDateTime < now &&
+          !(
+            slotDateTime.getHours() === 0 &&
+            (slotDateTime.getMinutes() === 0 ||
+              slotDateTime.getMinutes() === 30) &&
+            slotDateTime.getDate() === new Date(now).getDate() + 1
+          );
 
+        const isBooked = bookedSet.has(fullDateTime);
         return {
           start_time: fullDateTime,
           is_booked: isBooked,
@@ -132,31 +122,31 @@ const CycleGrid = () => {
     } catch (error) {
       console.error("시간 슬롯 불러오기 실패", error);
       setTimeSlots([]);
+    } finally {
+      setIsTimeSlotsLoading(false);
     }
   };
 
   const fetchStatuses = async () => {
     try {
       const res = await fetchCycleStatuses();
-
       const apiData = res.data;
-      const mergedStatuses = itemsLayout.map((localItem) => {
-        const found = apiData.find(
-          (apiItem) =>
-            apiItem.type === localItem.type &&
-            apiItem.number === localItem.number &&
-            apiItem.pk === localItem.pk
+      const newStatuses = cycleDefinitions.map((def) => {
+        const apiStatus = apiData.find(
+          (apiItem) => apiItem.pk === def.pk && apiItem.type === def.type
         );
-        return found
-          ? { ...localItem, ...found }
-          : { ...localItem, is_available: false, is_using: false };
+        return {
+          ...def,
+          is_available: apiStatus ? apiStatus.is_available : false,
+          is_using: apiStatus ? apiStatus.is_using : false,
+        };
       });
-      setStatuses(mergedStatuses);
+      setStatuses(newStatuses);
     } catch (error) {
-      console.error("아이템 상태 API 호출 실패", error);
+      console.error("사이클 상태 API 호출 실패", error);
       setStatuses(
-        itemsLayout.map((item) => ({
-          ...item,
+        cycleDefinitions.map((def) => ({
+          ...def,
           is_available: false,
           is_using: false,
         }))
@@ -174,18 +164,13 @@ const CycleGrid = () => {
     }
   }, [selectedDate, selectedItem]);
 
-  const handleClick = (itemDataFromLayout) => {
-    const currentItemStatus = statuses.find(
-      (s) => s && s.pk === itemDataFromLayout.pk
-    );
-
-    if (!currentItemStatus) {
-      alert("아이템 상태를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
+  const handleClick = (itemData) => {
+    if (!itemData) {
+      alert("사이클 정보를 가져오는 중입니다.");
       return;
     }
-
-    if (currentItemStatus.is_available === false) {
-      alert("이 아이템은 현재 사용할 수 없습니다 (수리중).");
+    if (itemData.is_available === false) {
+      alert("이 사이클은 현재 사용할 수 없습니다 (수리중).");
       return;
     }
 
@@ -196,9 +181,7 @@ const CycleGrid = () => {
     const formattedToday = `${year}-${month}-${day}`;
 
     setSelectedDate(formattedToday);
-
-    setSelectedItem(currentItemStatus);
-
+    setSelectedItem(itemData);
     setIsModalOpen(true);
   };
 
@@ -207,51 +190,53 @@ const CycleGrid = () => {
   };
 
   return (
-    <div className="main-grid-container">
-      {/* START_MODIFIED_SECTION */}
-      {statuses.map((itemStatus, index) => {
+    <div className="gym-items-row-container">
+      {statuses.map((itemStatus) => {
         if (!itemStatus) return null;
 
-        let displayName = `사이클 ${itemStatus.number}`;
-        let backgroundColor;
+        let displayName = itemStatus.name || `사이클 ${itemStatus.number}`;
+        let backgroundColor = "gray";
+        let cursor = "pointer";
 
         if (itemStatus.is_using === true) {
           backgroundColor = "red";
         } else if (itemStatus.is_available === false) {
           backgroundColor = "yellow";
+          cursor = "not-allowed";
         } else {
           backgroundColor = "green";
         }
 
         return (
+          // The class "cycleTable" is used here as well for consistency with original CSS.
+          // Consider renaming to "cycleItem" if TreadMillGrid.css also changes.
           <div
-            key={itemStatus.pk || index}
-            className={`item-box ${itemStatus.type}`}
-            style={{
-              ...itemStatus.style,
-              position: "absolute",
-              backgroundColor,
-              cursor:
-                itemStatus.is_available === false ? "not-allowed" : "pointer",
-            }}
+            key={itemStatus.pk}
+            className={`item-box cycleTable`}
+            style={{ backgroundColor, cursor }}
             onClick={() => handleClick(itemStatus)}
           >
             {displayName}
           </div>
         );
       })}
-      {/* END_MODIFIED_SECTION */}
 
       {isModalOpen && selectedItem && (
         <div className="modal-overlay">
           <div className="modal">
-            <h2>사이클 {selectedItem.number}번</h2>
-            <select onChange={handleDateChange} value={selectedDate || ""}>
-              {Array.from({ length: 7 }).map((_, idx) => {
+            <h2>{selectedItem.name || `사이클 ${selectedItem.number}`} 예약</h2>
+            <label htmlFor="date-select">날짜 선택:</label>
+            <select
+              id="date-select"
+              onChange={handleDateChange}
+              value={selectedDate || ""}
+              disabled={isTimeSlotsLoading}
+            >
+              {Array.from({ length: 7 }).map((_, index) => {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
                 const dateOption = new Date(today);
-                dateOption.setDate(today.getDate() + idx);
+                dateOption.setDate(today.getDate() + index);
                 const year = dateOption.getFullYear();
                 const month = String(dateOption.getMonth() + 1).padStart(
                   2,
@@ -263,7 +248,7 @@ const CycleGrid = () => {
                   weekday: "short",
                 });
                 return (
-                  <option key={idx} value={formattedDate}>
+                  <option key={index} value={formattedDate}>
                     {formattedDate} ({weekday})
                   </option>
                 );
@@ -271,36 +256,59 @@ const CycleGrid = () => {
             </select>
 
             {selectedDate && (
-              <div className="time-slots">
-                <h4>{selectedDate}의 시간 선택</h4>
-                <ul>
-                  {timeSlots.map((slot, idx) => (
-                    <li
-                      key={idx}
-                      style={{
-                        color: slot.is_booked
-                          ? "red"
-                          : slot.is_past
-                          ? "gray"
-                          : "green",
-                        cursor:
-                          slot.is_booked || slot.is_past
-                            ? "not-allowed"
-                            : "pointer",
-                      }}
-                      onClick={() => {
-                        if (!slot.is_booked && !slot.is_past) {
-                          reserveSlot(slot.start_time);
-                        }
-                      }}
-                    >
-                      {slot.display_time}
-                    </li>
-                  ))}
-                </ul>
+              <div className="time-slots-container">
+                <h4>{selectedDate} 시간 선택</h4>
+                {isTimeSlotsLoading ? (
+                  <p className="loading-message">
+                    시간 정보를 불러오는 중입니다...
+                  </p>
+                ) : timeSlots.length > 0 ? (
+                  <ul>
+                    {timeSlots.map((slot, idx) => (
+                      <li
+                        key={idx}
+                        style={{
+                          color: slot.is_booked
+                            ? "red"
+                            : slot.is_past
+                            ? "grey"
+                            : "green",
+                          cursor:
+                            slot.is_booked || slot.is_past
+                              ? "not-allowed"
+                              : "pointer",
+                          backgroundColor: slot.is_booked
+                            ? "#ffdddd"
+                            : slot.is_past
+                            ? "#f0f0f0"
+                            : "#ddffdd",
+                        }}
+                        onClick={() => {
+                          if (
+                            !slot.is_booked &&
+                            !slot.is_past &&
+                            !isTimeSlotsLoading
+                          ) {
+                            reserveSlot(slot.start_time);
+                          }
+                        }}
+                      >
+                        {slot.display_time}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p>예약 가능한 시간대가 없거나 불러올 수 없습니다.</p>
+                )}
               </div>
             )}
-            <button onClick={() => setIsModalOpen(false)}>닫기</button>
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="modal-close-button"
+              disabled={isTimeSlotsLoading}
+            >
+              닫기
+            </button>
           </div>
         </div>
       )}
