@@ -1,5 +1,6 @@
+// src/components/cook/CookGrid.jsx
 import React, { useEffect, useState } from "react";
-import "../../styles/CookGrid.css";
+import "../../styles/CookGrid.css"; // Ensure this path is correct
 import {
   fetchInductionStatuses,
   fetchInductionTimeSlots,
@@ -7,25 +8,28 @@ import {
 } from "../../services/bookingService";
 
 const CookGrid = () => {
-  const tables = [
-    [
-      { top: "10%", left: "10%" },
-      { bottom: "10%", right: "10%" },
-    ],
-    [
-      { top: "10%", left: "30%" },
-      { bottom: "10%", left: "30%" },
-    ],
-    [],
-    [
-      { top: "20%", left: "10%" },
-      { bottom: "10%", right: "10%" },
-    ],
-    [
-      { top: "10%", left: "30%" },
-      { bottom: "10%", left: "30%" },
-    ],
-    [],
+  const inductionStations = [
+    {
+      id: "station-1-left",
+      groups: [
+        { id: "group-1-top", inductions: [1, 2] }, //  PKs: 1, 2
+        { id: "group-1-bottom", inductions: [3, 4] }, //  PKs: 3, 4
+      ],
+    },
+    {
+      id: "station-2-middle",
+      groups: [
+        { id: "group-2-top", inductions: [5, 6] }, //  PKs: 5, 6
+        { id: "group-2-bottom", inductions: [7, 8] }, //  PKs: 7, 8
+      ],
+    },
+    {
+      id: "station-3-right", // Visually empty column
+      groups: [
+        { id: "group-3-top", inductions: [null, null] }, // Placeholder
+        { id: "group-3-bottom", inductions: [null, null] }, // Placeholder
+      ],
+    },
   ];
 
   const [statuses, setStatuses] = useState(Array(8).fill(null));
@@ -53,7 +57,6 @@ const CookGrid = () => {
     }
     try {
       await reserveInductionSlotAPI(selectedInduction, startTime);
-
       alert("예약이 완료되었습니다.");
       await fetchSlotsForSelectedDateAndInduction();
       fetchStatuses();
@@ -75,7 +78,6 @@ const CookGrid = () => {
         selectedInduction,
         selectedDate
       );
-
       const bookedSet = new Set(
         res.data.map((slot) => {
           const date = new Date(slot.start_time);
@@ -110,20 +112,19 @@ const CookGrid = () => {
   const fetchStatuses = async () => {
     try {
       const res = await fetchInductionStatuses();
-
       const apiData = res.data;
-      const sortedStatuses = Array(8).fill(null);
+      const newStatuses = Array(8).fill(null);
       apiData.forEach((item) => {
         const index = item.pk - 1;
         if (index >= 0 && index < 8) {
-          sortedStatuses[index] = {
+          newStatuses[index] = {
             pk: item.pk,
             is_available: item.is_available,
             is_using: item.is_using,
           };
         }
       });
-      setStatuses(sortedStatuses);
+      setStatuses(newStatuses);
     } catch (error) {
       console.error("인덕션 상태 API 호출 실패", error);
     }
@@ -139,17 +140,16 @@ const CookGrid = () => {
     }
   }, [selectedDate, selectedInduction]);
 
-  let globalInductionNumber = 1;
+  const handleInductionClick = (inductionPk) => {
+    if (inductionPk === null) return;
 
-  const handleClick = (inductionPk) => {
     const statusData = statuses[inductionPk - 1];
-
     if (!statusData) {
       alert("인덕션 상태를 불러오는 중입니다. 잠시 후 다시 시도해주세요.");
       return;
     }
     if (statusData.is_available === false) {
-      alert("이 인덕션은 현재 사용할 수 없습니다.");
+      alert("이 인덕션은 현재 사용할 수 없습니다 (수리/고장).");
       return;
     }
 
@@ -160,9 +160,7 @@ const CookGrid = () => {
     const formattedToday = `${year}-${month}-${day}`;
 
     setSelectedDate(formattedToday);
-
     setSelectedInduction(inductionPk);
-
     setIsModalOpen(true);
   };
 
@@ -170,52 +168,72 @@ const CookGrid = () => {
     setSelectedDate(e.target.value);
   };
 
+  const getInductionStyle = (inductionPk) => {
+    if (inductionPk === null)
+      return {
+        backgroundColor: "#f0f0f0",
+        cursor: "default",
+        borderColor: "#d0d0d0",
+      };
+    const statusData = statuses[inductionPk - 1];
+    let backgroundColor = "gray";
+    let cursor = "pointer";
+
+    if (statusData) {
+      if (statusData.is_using === true) backgroundColor = "red";
+      else if (statusData.is_available === false) {
+        backgroundColor = "yellow";
+        cursor = "not-allowed";
+      } else backgroundColor = "green";
+    }
+    return { backgroundColor, cursor };
+  };
+
   return (
-    <div className="grid-container">
-      {tables.map((items, tableIndex) => (
-        <div className="table" key={tableIndex}>
-          {items.map((induction, inductionIndex) => {
-            const currentInductionNumber = globalInductionNumber++;
-            const statusData = statuses[currentInductionNumber - 1];
-
-            let backgroundColor;
-            if (statusData === null) {
-              backgroundColor = "gray";
-            } else if (statusData.is_using === true) {
-              backgroundColor = "red";
-            } else if (statusData.is_available === false) {
-              backgroundColor = "red";
-            } else {
-              backgroundColor = "green";
-            }
-
-            return (
-              <div
-                key={inductionIndex}
-                className="induction"
-                style={{
-                  ...induction,
-                  position: "absolute",
-                  cursor:
-                    statusData && statusData.is_available === false
-                      ? "not-allowed"
-                      : "pointer",
-                  backgroundColor,
-                }}
-                onClick={() => handleClick(currentInductionNumber)}
-              >
-                {currentInductionNumber}
-              </div>
-            );
-          })}
+    <div className="cook-grid-layout">
+      {inductionStations.map((station) => (
+        <div key={station.id} className="induction-station-column">
+          {station.groups.map((group) => (
+            <div
+              key={group.id}
+              className={`induction-group-container ${
+                group.inductions.every((pk) => pk === null) ? "empty-group" : ""
+              }`}
+            >
+              {group.inductions.map((inductionPk, index) => (
+                <div
+                  // Use a unique key for each hob, including those in empty groups
+                  key={
+                    inductionPk !== null
+                      ? `induction-${inductionPk}`
+                      : `empty-hob-${station.id}-${group.id}-${index}`
+                  }
+                  className={`induction-hob ${
+                    inductionPk === null ? "empty-hob" : ""
+                  }`}
+                  style={getInductionStyle(inductionPk)}
+                  onClick={() =>
+                    inductionPk !== null && handleInductionClick(inductionPk)
+                  }
+                >
+                  {inductionPk !== null ? inductionPk : ""}
+                </div>
+              ))}
+            </div>
+          ))}
         </div>
       ))}
 
       {isModalOpen && selectedInduction && (
         <div className="modal-overlay">
           <div className="modal">
-            <h2>인덕션 {selectedInduction}번</h2>
-            <select onChange={handleDateChange} value={selectedDate || ""}>
+            <h2>인덕션 {selectedInduction}번 예약</h2>
+            <label htmlFor="date-select">날짜 선택:</label>
+            <select
+              id="date-select"
+              onChange={handleDateChange}
+              value={selectedDate || ""}
+            >
               {Array.from({ length: 7 }).map((_, index) => {
                 const today = new Date();
                 today.setHours(0, 0, 0, 0);
@@ -241,7 +259,7 @@ const CookGrid = () => {
 
             {selectedDate && (
               <div className="time-slots">
-                <h4>{selectedDate}의 시간 선택</h4>
+                <h4>{selectedDate} 시간 선택</h4>
                 <ul>
                   {timeSlots.map((slot, index) => (
                     <li
@@ -250,12 +268,17 @@ const CookGrid = () => {
                         color: slot.is_booked
                           ? "red"
                           : slot.is_past
-                          ? "gray"
+                          ? "grey"
                           : "green",
                         cursor:
                           slot.is_booked || slot.is_past
                             ? "not-allowed"
                             : "pointer",
+                        backgroundColor: slot.is_booked
+                          ? "#ffdddd"
+                          : slot.is_past
+                          ? "#f0f0f0"
+                          : "#ddffdd",
                       }}
                       onClick={() => {
                         if (!slot.is_booked && !slot.is_past) {
@@ -272,7 +295,12 @@ const CookGrid = () => {
                 </ul>
               </div>
             )}
-            <button onClick={() => setIsModalOpen(false)}>닫기</button>
+            <button
+              onClick={() => setIsModalOpen(false)}
+              className="modal-close-button"
+            >
+              닫기
+            </button>
           </div>
         </div>
       )}

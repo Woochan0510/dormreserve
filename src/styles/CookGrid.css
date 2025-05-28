@@ -1,13 +1,220 @@
-/* src/styles/CookPage.css */
-.base-page-container {
-  /* 페이지 전체를 감싸는 컨테이너 */
+/* src/styles/CookGrid.css */
+.cook-grid-layout {
   display: flex;
-  flex-direction: column;
-  min-height: 100vh; /* 최소 화면 높이만큼 채우도록 */
+  justify-content: space-around;
+  align-items: flex-start;
+  width: 100%;
+  /* min-width 설정: 3개의 스테이션 컬럼과 간격을 고려한 최소 너비. 필요시 조정. */
+  min-width: 480px; /* 예: (hob max-width 120px + group padding 16px + station padding 20px) * 2 + empty station min-width + gaps */
+  height: 100%;
+  padding: 15px;
+  box-sizing: border-box;
+  gap: 20px; /* 스테이션 컬럼 간 간격 */
 }
 
-/* .top_bar, .top_title_name, .top_right, .top_right_set, .circle, .auth_buttons 등
-   SharedHeader로 이동된 요소들의 스타일은 여기서 제거하거나 SharedHeader.css를 따름. */
+.induction-station-column {
+  display: flex;
+  flex-direction: column; /* 그룹들을 세로로 쌓음 */
+  align-items: center;
+  gap: 15px; /* 인덕션 그룹들 사이의 간격 */
+  flex: 1; /* 공간을 균등하게 차지하도록 하지만, cook-grid-layout의 min-width에 의해 제한됨 */
+  min-width: 0; /* flex 아이템이 내용물 크기 이하로 줄어들 수 있도록 */
+  padding: 10px;
+  box-sizing: border-box;
+  /* border: 1px dashed #ddd; */ /* 시각화를 위한 임시 테두리 */
+}
+
+.induction-group-container {
+  display: flex;
+  flex-direction: column; /* 그룹 내 인덕션들을 세로로 쌓음 (1번 위, 2번 아래) */
+  gap: 8px; /* 한 쌍의 인덕션(1,2) 사이의 간격 */
+  border: 1px solid #b0b0b0; /* 그룹을 감싸는 테두리 */
+  padding: 10px;
+  border-radius: 8px; /* 그룹 컨테이너의 모서리 둥글게 */
+  background-color: #f8f8f8; /* 그룹 컨테이너 배경색 */
+  width: 100%; /* 스테이션 컬럼 너비에 맞춤 */
+  max-width: 150px; /* 그룹 컨테이너 최대 너비 */
+  box-sizing: border-box;
+}
+
+.induction-group-container.empty-group {
+  border-color: #e0e0e0;
+  background-color: #fdfdfd; /* 빈 그룹은 더 밝게 */
+}
+.induction-group-container.empty-group .induction-hob {
+  visibility: hidden; /* 빈 그룹 내의 hob은 보이지 않게 처리 */
+}
+
+.induction-hob {
+  width: 100%; /* 그룹 컨테이너 너비에 꽉 참 */
+  min-height: 65px;
+  padding: 10px;
+  border: 2px solid #555;
+  background-color: #e0e0e0; /* 기본 색상 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-size: 1.1em;
+  color: #333;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: center;
+  box-sizing: border-box;
+  transition: background-color 0.3s ease, transform 0.2s ease,
+    box-shadow 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.induction-hob.empty-hob {
+  background-color: transparent; /* 빈 hob은 투명하게 */
+  border-color: transparent; /* 빈 hob 테두리도 투명하게 */
+  cursor: default;
+  box-shadow: none;
+}
+
+.induction-hob:not(.empty-hob):hover {
+  transform: translateY(-2px) scale(1.03);
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+/* 반응형 스타일에서 flex-direction 변경 및 wrap 제거 - 스크롤을 위해 */
+@media (max-width: 768px) {
+  .cook-grid-layout {
+    min-width: 420px; /* 화면이 줄어도 최소 너비 유지 시도 */
+    gap: 15px;
+    padding: 10px;
+  }
+  .induction-group-container {
+    max-width: 130px;
+    padding: 8px;
+    gap: 6px;
+  }
+  .induction-hob {
+    min-height: 60px;
+    font-size: 1em;
+  }
+}
+
+@media (max-width: 480px) {
+  .cook-grid-layout {
+    min-width: 360px; /* 더 작은 화면에서의 최소 너비 */
+    gap: 10px;
+  }
+  .induction-group-container {
+    max-width: 110px;
+    padding: 6px;
+    gap: 5px;
+  }
+  .induction-hob {
+    min-height: 55px;
+    font-size: 0.9em;
+  }
+}
+
+/* Modal styles - 이전과 동일하게 유지 */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.65);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  padding: 15px;
+  box-sizing: border-box;
+}
+
+.modal {
+  background-color: white;
+  padding: 20px 25px;
+  border-radius: 8px;
+  box-shadow: 0 5px 20px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal h2 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 1.4em;
+  color: #333;
+  text-align: center;
+}
+
+.modal label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: 600;
+  font-size: 0.9em;
+}
+
+.modal select {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 0.95em;
+}
+
+.time-slots h4 {
+  margin-top: 10px;
+  margin-bottom: 10px;
+  font-size: 1.1em;
+  text-align: center;
+}
+
+.time-slots ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(75px, 1fr));
+  gap: 6px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+.time-slots li {
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  text-align: center;
+  transition: background-color 0.2s, transform 0.1s;
+  font-size: 0.9em;
+}
+
+.time-slots li:not([style*="not-allowed"]):hover {
+  background-color: #e9e9e9;
+  transform: scale(1.03);
+}
+
+.modal-close-button {
+  padding: 10px 18px;
+  background-color: #6c757d;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.95em;
+  margin-top: 20px;
+  align-self: flex-end;
+  font-weight: 500;
+}
+
+.modal-close-button:hover {
+  background-color: #5a6268;
+}
 
 .main-content-area {
   /* SharedHeader를 제외한 컨텐츠 영역 */
@@ -21,36 +228,13 @@
 }
 
 .map {
-  border: 2px solid black;
-  width: 90%; /* 화면 너비에 따라 유동적으로 */
-  max-width: 1000px; /* 최대 너비 지정 */
-  height: auto; /* 내용에 따라 높이 자동 조절 */
-  min-height: 400px; /* 최소 높이 (내용이 적을 때 대비) */
-  aspect-ratio: 16 / 9; /* 가로 세로 비율 유지 (선택 사항) */
-  padding: 15px; /* map 내부 여백 */
-  box-sizing: border-box;
-  background-color: #f9f9f9; /* map 배경색 */
-  border-radius: 8px; /* 모서리 둥글게 */
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1); /* 그림자 효과 */
-}
-
-/* CookGrid.css 와의 관계를 고려하여 중복 스타일 정리 */
-/* 예: .grid-container 스타일이 CookGrid.css에 있다면 여기서 .map 내부의 grid 관련 스타일 불필요 */
-
-/* 이전에 페이지 하단에 있던 메인화면 버튼 스타일은 이제 불필요 (SharedHeader가 담당) */
-/* .main_button {
-  margin-top: 10px;
-} */
-
-/* 반응형 스타일 */
-@media (max-width: 768px) {
-  .main-content-area {
-    padding: 15px;
-  }
-  .map {
-    width: 95%;
-    min-height: 300px;
-    aspect-ratio: unset; /* 작은 화면에서는 비율 고정 해제 가능 */
-    height: 70vh; /* 화면 높이의 일정 비율 사용 */
-  }
+  /* ... 기존 스타일 ... */
+  /* margin-bottom: auto; */ /* 다른 요소가 없다면 이것만으로 효과가 없을 수 있음 */
+  /* 이 경우, .main-content-area의 패딩을 조절하거나, .map의 높이를 좀 더 명확히 제어하는 것이 좋음 */
+  width: 90%;
+  max-width: 1000px;
+  max-height: 80vh; /* 예를 들어, 화면 높이에 따라 최대 높이 제한 */
+  overflow: auto;
+  /* ... 나머지 스타일 ... */
+  display: flex;
 }

@@ -6,19 +6,17 @@ import CookGrid from "../../components/cook/CookGrid";
 // Removed: import { logoutUser } from "../../services/authService";
 
 function Cook() {
-  // Removed: const navigate = useNavigate();
-  // Removed: const handleLogout = ...
-
   return (
     <div className="base-page-container">
       {" "}
-      {/* 전체 페이지 컨테이너 */}
+      {/* 이 클래스는 src/styles/CookGrid.css 에 정의됨 */}
       {/* SharedHeader가 AppRouter에서 이 페이지를 감싸면서 렌더링됩니다. */}
-      {/* pageTitle과 showLegend는 AppRouter의 MainLayout을 통해 전달됩니다. */}
       <div className="main-content-area">
         {" "}
-        {/* 헤더를 제외한 컨텐츠 영역 */}
+        {/* 이 클래스도 src/styles/CookGrid.css 에 정의됨 */}
         <div className="map">
+          {" "}
+          {/* 이 클래스도 src/styles/CookGrid.css 에 정의됨 */}
           <CookGrid />
         </div>
       </div>
