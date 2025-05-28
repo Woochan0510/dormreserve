@@ -141,9 +141,8 @@ const TreadMillGrid = () => {
       const res = await fetchTreadmillStatuses();
       const apiData = res.data;
       const newStatuses = treadmillDefinitions.map((def) => {
-        const apiStatus = apiData.find(
-          (apiItem) => apiItem.pk === def.pk && apiItem.type === def.type
-        );
+        // API 응답에 type 필드가 없으므로 pk로만 매칭합니다.
+        const apiStatus = apiData.find((apiItem) => apiItem.pk === def.pk);
         return {
           ...def,
           is_available: apiStatus ? apiStatus.is_available : null,
