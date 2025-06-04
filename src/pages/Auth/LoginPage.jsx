@@ -1,10 +1,8 @@
-// src/pages/Auth/LoginPage.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../../styles/LoginPage.css";
-import API_BASE_URL from "../../config/api"; // Still used for direct fetch, consider moving to authService fully
+import API_BASE_URL from "../../config/api";
 import KWLogo from "../../assets/images/kw_logo_word_mark.jpg";
-// Import loginUser from authService
 import { loginUser } from "../../services/authService";
 
 function Login() {
@@ -28,11 +26,9 @@ function Login() {
     setLoading(true);
 
     try {
-      // Use loginUser from authService
-      const response = await loginUser(studentId, password); //
+      const response = await loginUser(studentId, password);
 
       if (response.data && response.data.token) {
-        // Store the token in localStorage
         localStorage.setItem("authToken", response.data.token);
         navigate("/Main");
       } else if (
@@ -40,11 +36,9 @@ function Login() {
         response.data.detail === "로그인 성공" &&
         response.data.token
       ) {
-        // Fallback for the provided response structure
         localStorage.setItem("authToken", response.data.token);
         navigate("/Main");
       } else {
-        // Handle cases where token might be missing or response structure is different
         const errorData = response.data || {};
         setError(
           errorData.detail ||
