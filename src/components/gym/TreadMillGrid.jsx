@@ -1,6 +1,5 @@
-// src/components/gym/TreadMillGrid.jsx
 import React, { useEffect, useState } from "react";
-import "../../styles/TreadMillGrid.css"; // Specific styles for treadmill items if needed
+import "../../styles/TreadMillGrid.css";
 import {
   fetchTreadmillStatuses,
   fetchTreadmillTimeSlots,
@@ -23,6 +22,8 @@ const TreadMillGrid = () => {
       is_available: null,
       is_using: null,
       isLoading: true,
+      fetchFailed: false,
+      apiMissing: false,
     }))
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -55,7 +56,7 @@ const TreadMillGrid = () => {
       await reserveTreadmillSlotAPI(selectedItem.pk, startTime);
       alert("예약이 완료되었습니다.");
       await fetchSlotsForSelectedItem();
-      fetchStatuses(); // 상태 새로고침
+      fetchStatuses();
     } catch (error) {
       console.error("예약 실패:", error);
       alert(
@@ -110,14 +111,14 @@ const TreadMillGrid = () => {
         }
         slotDateTime = new Date(fullDateTime);
 
-        const isPast =
-          slotDateTime < now &&
-          !(
-            slotDateTime.getHours() === 0 &&
-            (slotDateTime.getMinutes() === 0 ||
-              slotDateTime.getMinutes() === 30) &&
-            slotDateTime.getDate() === new Date(now).getDate() + 1
-          );
+        const isTodaySelected =
+          new Date(selectedDate).toDateString() === new Date().toDateString();
+        let isPast;
+        if (time.startsWith("nextDay")) {
+          isPast = false;
+        } else {
+          isPast = isTodaySelected && slotDateTime < now;
+        }
 
         const isBooked = bookedSet.has(fullDateTime);
         return {
@@ -141,15 +142,26 @@ const TreadMillGrid = () => {
       const res = await fetchTreadmillStatuses();
       const apiData = res.data;
       const newStatuses = treadmillDefinitions.map((def) => {
-        // API 응답에 type 필드가 없으므로 pk로만 매칭합니다.
         const apiStatus = apiData.find((apiItem) => apiItem.pk === def.pk);
-        return {
-          ...def,
-          is_available: apiStatus ? apiStatus.is_available : null,
-          is_using: apiStatus ? apiStatus.is_using : null,
-          isLoading: false,
-          apiMissing: !apiStatus,
-        };
+        if (apiStatus) {
+          return {
+            ...def,
+            is_available: apiStatus.is_available,
+            is_using: apiStatus.is_using,
+            isLoading: false,
+            fetchFailed: false,
+            apiMissing: false,
+          };
+        } else {
+          return {
+            ...def,
+            is_available: false,
+            is_using: null,
+            isLoading: false,
+            fetchFailed: false,
+            apiMissing: true,
+          };
+        }
       });
       setStatuses(newStatuses);
     } catch (error) {
@@ -161,6 +173,7 @@ const TreadMillGrid = () => {
           is_using: null,
           isLoading: false,
           fetchFailed: true,
+          apiMissing: false,
         }))
       );
     }
@@ -177,30 +190,45 @@ const TreadMillGrid = () => {
   }, [selectedDate, selectedItem]);
 
   const handleClick = (itemData) => {
-    if (itemData.isLoading || itemData.fetchFailed || itemData.apiMissing) {
-      alert("트레드밀 정보를 가져오는 중이거나 상태를 확인할 수 없습니다.");
+    const itemName = itemData.name || `트레드밀 ${itemData.number}`;
+
+    if (itemData.isLoading) {
+      alert("트레드밀 정보를 가져오는 중입니다. 잠시 후 다시 시도해주세요.");
       return;
     }
+    if (itemData.fetchFailed) {
+      alert(`${itemName}의 상태 정보를 불러오지 못했습니다. (API 오류)`);
+      return;
+    }
+    if (itemData.is_using === true) {
+      alert(`${itemName}은(는) 현재 사용 중입니다.`);
+      return;
+    }
+
     if (itemData.is_available === false) {
-      alert("이 트레드밀은 현재 사용할 수 없습니다 (수리중).");
+      alert(`이 ${itemName}은(는) 현재 사용할 수 없습니다 (수리중).`);
       return;
     }
     if (itemData.is_available === null) {
       alert(
-        "트레드밀 상태를 확인할 수 없습니다. 새로고침 후 다시 시도해주세요."
+        `${itemName}의 상태를 확인할 수 없습니다. 새로고침 후 다시 시도해주세요.`
       );
       return;
     }
 
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, "0");
-    const day = String(today.getDate()).padStart(2, "0");
-    const formattedToday = `${year}-${month}-${day}`;
+    if (itemData.is_available === true) {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, "0");
+      const day = String(today.getDate()).padStart(2, "0");
+      const formattedToday = `${year}-${month}-${day}`;
 
-    setSelectedDate(formattedToday);
-    setSelectedItem(itemData);
-    setIsModalOpen(true);
+      setSelectedDate(formattedToday);
+      setSelectedItem(itemData);
+      setIsModalOpen(true);
+    } else {
+      alert(`${itemName}의 상태가 예약 가능한 상태가 아닙니다.`);
+    }
   };
 
   const handleDateChange = (e) => {
@@ -210,8 +238,8 @@ const TreadMillGrid = () => {
   return (
     <div className="gym-items-row-container">
       {statuses.map((itemStatus) => {
-        let backgroundColor = "#BEBEBE"; // Medium gray for loading
-        let textColor = "#333333"; // Dark gray text
+        let backgroundColor = "#BEBEBE";
+        let textColor = "#333333";
         let cursor = "default";
         const itemName = itemStatus.name || `트레드밀 ${itemStatus.number}`;
         let displayText = itemName;
@@ -219,36 +247,29 @@ const TreadMillGrid = () => {
         if (itemStatus.isLoading) {
           displayText = "로딩중...";
           cursor = "wait";
-        } else if (itemStatus.fetchFailed || itemStatus.apiMissing) {
+        } else if (itemStatus.fetchFailed) {
           displayText = `${itemName} (상태 확인 실패)`;
-          backgroundColor = "#D3D3D3"; // Light gray for error
-        } else if (itemStatus.is_available === false) {
-          backgroundColor = "yellow";
+          backgroundColor = "#D3D3D3";
         } else if (itemStatus.is_using === true) {
           backgroundColor = "red";
           textColor = "#FFFFFF";
+          cursor = "not-allowed";
+        } else if (itemStatus.is_available === false) {
+          backgroundColor = "yellow";
+          textColor = "#333333";
+          cursor = "not-allowed";
         } else if (itemStatus.is_available === true) {
           backgroundColor = "green";
           textColor = "#FFFFFF";
           cursor = "pointer";
         }
+
         return (
           <div
             key={itemStatus.pk}
-            className={`item-box cycleTable`}
+            className={`item-box treadmillTable`}
             style={{ backgroundColor, cursor, color: textColor }}
-            onClick={() => {
-              if (
-                itemStatus.is_available === true &&
-                !itemStatus.isLoading &&
-                !itemStatus.fetchFailed &&
-                !itemStatus.apiMissing
-              ) {
-                handleClick(itemStatus);
-              } else if (itemStatus.is_available === false) {
-                alert(`이 ${itemName}(은)는 현재 사용할 수 없습니다 (수리중).`);
-              }
-            }}
+            onClick={() => handleClick(itemStatus)}
           >
             {displayText}
           </div>

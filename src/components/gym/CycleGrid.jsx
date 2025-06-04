@@ -1,6 +1,5 @@
-// src/components/gym/CycleGrid.jsx
 import React, { useEffect, useState } from "react";
-import "../../styles/CycleGrid.css"; // Specific styles for cycle items if needed
+import "../../styles/CycleGrid.css";
 import {
   fetchCycleStatuses,
   fetchCycleTimeSlots,
@@ -21,6 +20,8 @@ const CycleGrid = () => {
       is_available: null,
       is_using: null,
       isLoading: true,
+      fetchFailed: false,
+      apiMissing: false,
     }))
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -28,6 +29,34 @@ const CycleGrid = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [timeSlots, setTimeSlots] = useState([]);
   const [isTimeSlotsLoading, setIsTimeSlotsLoading] = useState(false);
+
+  const getStatusStyle = (statusData) => {
+    let backgroundColor = "#BEBEBE";
+    let cursor = "default";
+    let textColor = "#333";
+
+    if (statusData) {
+      if (statusData.isLoading) {
+      } else if (statusData.fetchFailed) {
+      } else if (statusData.is_using === true) {
+        backgroundColor = "red";
+        cursor = "not-allowed";
+        textColor = "#fff";
+      } else if (
+        statusData.is_available === false ||
+        (statusData.apiMissing && !statusData.fetchFailed)
+      ) {
+        backgroundColor = "yellow";
+        cursor = "not-allowed";
+        textColor = "#333";
+      } else if (statusData.is_available === true && !statusData.apiMissing) {
+        backgroundColor = "green";
+        cursor = "pointer";
+        textColor = "#fff";
+      }
+    }
+    return { backgroundColor, cursor, color: textColor };
+  };
 
   const getTimeSlots = () => {
     const slots = [];
@@ -53,7 +82,7 @@ const CycleGrid = () => {
       await reserveCycleSlotAPI(selectedItem.pk, startTime);
       alert("예약이 완료되었습니다.");
       await fetchSlotsForSelectedItem();
-      fetchStatuses(); // 상태 새로고침
+      fetchStatuses();
     } catch (error) {
       console.error("예약 실패:", error);
       alert(
@@ -108,14 +137,14 @@ const CycleGrid = () => {
         }
         slotDateTime = new Date(fullDateTime);
 
-        const isPast =
-          slotDateTime < now &&
-          !(
-            slotDateTime.getHours() === 0 &&
-            (slotDateTime.getMinutes() === 0 ||
-              slotDateTime.getMinutes() === 30) &&
-            slotDateTime.getDate() === new Date(now).getDate() + 1
-          );
+        const isTodaySelected =
+          new Date(selectedDate).toDateString() === new Date().toDateString();
+        let isPast;
+        if (time.startsWith("nextDay")) {
+          isPast = false;
+        } else {
+          isPast = isTodaySelected && slotDateTime < now;
+        }
 
         const isBooked = bookedSet.has(fullDateTime);
         return {
@@ -139,15 +168,26 @@ const CycleGrid = () => {
       const res = await fetchCycleStatuses();
       const apiData = res.data;
       const newStatuses = cycleDefinitions.map((def) => {
-        // API 응답에 type 필드가 없으므로 pk로만 매칭합니다.
         const apiStatus = apiData.find((apiItem) => apiItem.pk === def.pk);
-        return {
-          ...def,
-          is_available: apiStatus ? apiStatus.is_available : null,
-          is_using: apiStatus ? apiStatus.is_using : null,
-          isLoading: false,
-          apiMissing: !apiStatus,
-        };
+        if (apiStatus) {
+          return {
+            ...def,
+            is_available: apiStatus.is_available,
+            is_using: apiStatus.is_using,
+            isLoading: false,
+            fetchFailed: false,
+            apiMissing: false,
+          };
+        } else {
+          return {
+            ...def,
+            is_available: false,
+            is_using: null,
+            isLoading: false,
+            fetchFailed: false,
+            apiMissing: true,
+          };
+        }
       });
       setStatuses(newStatuses);
     } catch (error) {
@@ -159,6 +199,7 @@ const CycleGrid = () => {
           is_using: null,
           isLoading: false,
           fetchFailed: true,
+          apiMissing: false,
         }))
       );
     }
@@ -175,28 +216,49 @@ const CycleGrid = () => {
   }, [selectedDate, selectedItem]);
 
   const handleClick = (itemData) => {
-    if (itemData.isLoading || itemData.fetchFailed || itemData.apiMissing) {
-      alert("사이클 정보를 가져오는 중이거나 상태를 확인할 수 없습니다.");
+    const itemName = itemData.name || `사이클 ${itemData.number}`;
+
+    if (itemData.isLoading) {
+      alert("사이클 정보를 가져오는 중입니다. 잠시 후 다시 시도해주세요.");
       return;
     }
-    if (itemData.is_available === false) {
-      alert("이 사이클은 현재 사용할 수 없습니다 (수리중).");
+    if (itemData.fetchFailed) {
+      alert(`${itemName}의 상태 정보를 불러오지 못했습니다. (API 호출 오류)`);
       return;
     }
+    if (itemData.is_using === true) {
+      alert(`${itemName}은(는) 현재 사용 중입니다.`);
+      return;
+    }
+
+    if (
+      itemData.is_available === false ||
+      (itemData.apiMissing && !itemData.fetchFailed)
+    ) {
+      alert(`${itemName}은(는) 현재 사용할 수 없습니다 (수리중).`);
+      return;
+    }
+
     if (itemData.is_available === null) {
-      alert("사이클 상태를 확인할 수 없습니다. 새로고침 후 다시 시도해주세요.");
+      alert(
+        `${itemName}의 상태를 정확히 알 수 없어 예약할 수 없습니다. 새로고침 후 다시 시도해주세요.`
+      );
       return;
     }
 
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, "0");
-    const day = String(today.getDate()).padStart(2, "0");
-    const formattedToday = `${year}-${month}-${day}`;
+    if (itemData.is_available === true && !itemData.apiMissing) {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, "0");
+      const day = String(today.getDate()).padStart(2, "0");
+      const formattedToday = `${year}-${month}-${day}`;
 
-    setSelectedDate(formattedToday);
-    setSelectedItem(itemData);
-    setIsModalOpen(true);
+      setSelectedDate(formattedToday);
+      setSelectedItem(itemData);
+      setIsModalOpen(true);
+    } else {
+      alert(`${itemName}의 상태가 예약 가능한 상태가 아닙니다.`);
+    }
   };
 
   const handleDateChange = (e) => {
@@ -206,47 +268,22 @@ const CycleGrid = () => {
   return (
     <div className="gym-items-row-container">
       {statuses.map((itemStatus) => {
-        let backgroundColor = "#BEBEBE"; // Medium gray for loading
-        let textColor = "#333333"; // Dark gray text
-        let cursor = "default";
+        const { backgroundColor, cursor, color } = getStatusStyle(itemStatus);
         const itemName = itemStatus.name || `사이클 ${itemStatus.number}`;
         let displayText = itemName;
 
         if (itemStatus.isLoading) {
           displayText = "로딩중...";
-          cursor = "wait";
-        } else if (itemStatus.fetchFailed || itemStatus.apiMissing) {
+        } else if (itemStatus.fetchFailed) {
           displayText = `${itemName} (상태 확인 실패)`;
-          backgroundColor = "#D3D3D3"; // Light gray for error
-        } else if (itemStatus.is_available === false) {
-          backgroundColor = "yellow";
-        } else if (itemStatus.is_using === true) {
-          backgroundColor = "red";
-          textColor = "#FFFFFF";
-        } else if (itemStatus.is_available === true) {
-          backgroundColor = "green";
-          textColor = "#FFFFFF";
-          cursor = "pointer";
         }
 
         return (
           <div
             key={itemStatus.pk}
-            className={`item-box cycleTable`}
-            style={{ backgroundColor, cursor, color: textColor }}
-            onClick={() => {
-              // 사용중 상태일 때도 예약 가능하도록 조건 변경
-              if (
-                itemStatus.is_available === true &&
-                !itemStatus.isLoading &&
-                !itemStatus.fetchFailed &&
-                !itemStatus.apiMissing
-              ) {
-                handleClick(itemStatus);
-              } else if (itemStatus.is_available === false) {
-                alert(`이 ${itemName}(은)는 현재 사용할 수 없습니다 (수리중).`);
-              }
-            }}
+            className="item-box cycleTable"
+            style={{ backgroundColor, cursor, color }}
+            onClick={() => handleClick(itemStatus)}
           >
             {displayText}
           </div>

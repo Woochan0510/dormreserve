@@ -1,6 +1,5 @@
-// src/components/cook/CookGrid.jsx
 import React, { useEffect, useState } from "react";
-import "../../styles/CookGrid.css"; // Ensure this path is correct
+import "../../styles/CookGrid.css";
 import {
   fetchInductionStatuses,
   fetchInductionTimeSlots,
@@ -10,14 +9,14 @@ import {
 const CookGrid = () => {
   const inductionStations = [
     {
-      id: "station-1-area", // 왼쪽 구역 (이미지의 '오락기' 영역과 유사)
+      id: "station-1-area",
       groups: [
-        { id: "group-1-A", inductions: [1, 2] }, // 이 그룹이 하나의 아이템처럼 표시됨
+        { id: "group-1-A", inductions: [1, 2] },
         { id: "group-1-B", inductions: [3, 4] },
       ],
     },
     {
-      id: "station-2-area", // 오른쪽 구역 (이미지의 '탁구대' 영역과 유사)
+      id: "station-2-area",
       groups: [
         { id: "group-2-A", inductions: [5, 6] },
         { id: "group-2-B", inductions: [7, 8] },
