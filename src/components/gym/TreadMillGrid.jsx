@@ -35,7 +35,7 @@ const TreadMillGrid = () => {
   const [selectedStartTimeSlot, setSelectedStartTimeSlot] = useState(null);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const allTimeSlots = getTimeSlots();
+  const allGeneratedTimeSlots = getTimeSlots();
 
   function getTimeSlots() {
     const slots = [];
@@ -46,8 +46,6 @@ const TreadMillGrid = () => {
         slots.push(`${hh}:${mm}`);
       }
     }
-    slots.push(`nextDay00:00`);
-    slots.push(`nextDay00:30`);
     return slots;
   }
 
@@ -100,42 +98,27 @@ const TreadMillGrid = () => {
       );
 
       const now = new Date();
-      const processedSlots = allTimeSlots.map((time, index) => {
-        let fullDateTime;
-        let displayTime = time;
-        let slotDateTime;
+      const processedSlots = allGeneratedTimeSlots.map((time, index) => {
+        const fullDateTimeString = `${selectedDate}T${time}:00`;
+        const slotDateTime = new Date(fullDateTimeString);
 
-        if (time.startsWith("nextDay")) {
-          const actualTime = time.substring(7);
-          const nextDayDate = new Date(selectedDate);
-          nextDayDate.setDate(new Date(selectedDate).getDate() + 1);
-          const nextDayFormatted = `${nextDayDate.getFullYear()}-${String(
-            nextDayDate.getMonth() + 1
-          ).padStart(2, "0")}-${String(nextDayDate.getDate()).padStart(
-            2,
-            "0"
-          )}`;
-          fullDateTime = `${nextDayFormatted}T${actualTime}`;
-          displayTime = `다음날 ${actualTime}`;
-        } else {
-          fullDateTime = `${selectedDate}T${time}`;
-        }
-        slotDateTime = new Date(fullDateTime);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const selectedDateObj = new Date(selectedDate);
+        selectedDateObj.setHours(0, 0, 0, 0);
 
-        const isTodaySelected =
-          new Date(selectedDate).toDateString() === new Date().toDateString();
-        let isPast;
-        if (time.startsWith("nextDay")) {
-          isPast = false;
-        } else {
-          isPast = isTodaySelected && slotDateTime < now;
+        let isPast = false;
+        if (selectedDateObj < today) {
+          isPast = true;
+        } else if (selectedDateObj.getTime() === today.getTime()) {
+          isPast = slotDateTime < now;
         }
 
-        const isBooked = bookedSet.has(fullDateTime);
+        const isBooked = bookedSet.has(`${selectedDate}T${time}`);
         return {
-          id: `${selectedDate}-${time}-${selectedItem.pk}`, // 고유 ID
-          start_time: fullDateTime,
-          display_time: displayTime,
+          id: `${selectedDate}-${time}-${selectedItem.pk}-treadmill`,
+          start_time: `${selectedDate}T${time}`,
+          display_time: time,
           is_booked: isBooked,
           is_past: isPast,
           index: index,
@@ -151,9 +134,8 @@ const TreadMillGrid = () => {
   };
 
   const handleTimeSlotClick = (clickedSlot) => {
-    if (clickedSlot.is_booked || clickedSlot.is_past || isTimeSlotsLoading) {
+    if (clickedSlot.is_booked || clickedSlot.is_past || isTimeSlotsLoading)
       return;
-    }
     if (selectedDuration === 60) {
       const nextSlotIndex = clickedSlot.index + 1;
       if (nextSlotIndex < timeSlots.length) {
@@ -161,7 +143,6 @@ const TreadMillGrid = () => {
         const clickedSlotTime = new Date(clickedSlot.start_time);
         const nextSlotTime = new Date(nextSlot.start_time);
         const timeDiff = (nextSlotTime - clickedSlotTime) / (1000 * 60);
-
         if (timeDiff === 30 && !nextSlot.is_booked && !nextSlot.is_past) {
           setSelectedStartTimeSlot(clickedSlot);
         } else {
@@ -178,6 +159,7 @@ const TreadMillGrid = () => {
   };
 
   const fetchStatuses = async () => {
+    // (기존 로직과 동일)
     try {
       const res = await fetchTreadmillStatuses();
       const apiData = res.data;
@@ -222,7 +204,6 @@ const TreadMillGrid = () => {
   useEffect(() => {
     fetchStatuses();
   }, []);
-
   useEffect(() => {
     if (selectedItem && selectedDate) {
       fetchSlotsForSelectedItem();
@@ -231,6 +212,7 @@ const TreadMillGrid = () => {
   }, [selectedDate, selectedItem, selectedDuration]);
 
   const handleClick = (itemData) => {
+    // (기존 로직과 동일)
     const itemName = itemData.name || `트레드밀 ${itemData.number}`;
     if (itemData.isLoading) {
       alert("트레드밀 정보를 가져오는 중입니다. 잠시 후 다시 시도해주세요.");
@@ -276,13 +258,12 @@ const TreadMillGrid = () => {
   const handleDateChange = (e) => {
     setSelectedDate(e.target.value);
   };
-
   const handleDurationChange = (duration) => {
     setSelectedDuration(duration);
     setSelectedStartTimeSlot(null);
   };
-
   const getStatusStyle = (statusData) => {
+    // (기존 로직과 동일)
     let backgroundColor = "#BEBEBE";
     let cursor = "default";
     let textColor = "#333";
@@ -328,7 +309,8 @@ const TreadMillGrid = () => {
             style={{ backgroundColor, cursor, color }}
             onClick={() => handleClick(itemStatus)}
           >
-            {displayText}
+            {" "}
+            {displayText}{" "}
           </div>
         );
       })}

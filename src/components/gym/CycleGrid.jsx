@@ -33,11 +33,11 @@ const CycleGrid = () => {
   const [selectedStartTimeSlot, setSelectedStartTimeSlot] = useState(null);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const allTimeSlots = getTimeSlots(); // 컴포넌트 스코프에서 한 번만 생성
+  const allGeneratedTimeSlots = getTimeSlots();
 
-  // getTimeSlots 함수는 컴포넌트 외부에 있거나 useCallback으로 최적화 가능
   function getTimeSlots() {
     const slots = [];
+    // 사이클 및 기타 시설은 05:00 부터 운영 가정
     for (let hour = 5; hour < 24; hour++) {
       for (let min = 0; min < 60; min += 30) {
         const hh = String(hour).padStart(2, "0");
@@ -45,8 +45,9 @@ const CycleGrid = () => {
         slots.push(`${hh}:${mm}`);
       }
     }
-    slots.push(`nextDay00:00`);
-    slots.push(`nextDay00:30`);
+    // "다음날" 슬롯 제거
+    // slots.push(`nextDay00:00`);
+    // slots.push(`nextDay00:30`);
     return slots;
   }
 
@@ -89,6 +90,8 @@ const CycleGrid = () => {
       const bookedSet = new Set(
         res.data.map((slot) => {
           const date = new Date(slot.start_time);
+          // API 응답의 시간을 UTC로 간주하고, 로컬 시간대로 변환하지 않고 그대로 사용
+          // YYYY-MM-DDTHH:MM 형식으로 비교하기 위해
           const year = date.getFullYear();
           const month = String(date.getMonth() + 1).padStart(2, "0");
           const day = String(date.getDate()).padStart(2, "0");
@@ -98,43 +101,34 @@ const CycleGrid = () => {
         })
       );
 
-      const now = new Date();
-      const processedSlots = allTimeSlots.map((time, index) => {
-        let fullDateTime;
-        let displayTime = time;
-        let slotDateTime;
+      const now = new Date(); // 현재 시각 (로컬)
+      const processedSlots = allGeneratedTimeSlots.map((time, index) => {
+        // selectedDate는 YYYY-MM-DD 형식, time은 HH:MM 형식
+        const fullDateTimeString = `${selectedDate}T${time}:00`; // 초 추가
+        const slotDateTime = new Date(fullDateTimeString); // 로컬 시간대로 해석됨
 
-        if (time.startsWith("nextDay")) {
-          const actualTime = time.substring(7);
-          const nextDayDate = new Date(selectedDate);
-          nextDayDate.setDate(new Date(selectedDate).getDate() + 1);
-          const nextDayFormatted = `${nextDayDate.getFullYear()}-${String(
-            nextDayDate.getMonth() + 1
-          ).padStart(2, "0")}-${String(nextDayDate.getDate()).padStart(
-            2,
-            "0"
-          )}`;
-          fullDateTime = `${nextDayFormatted}T${actualTime}`;
-          displayTime = `다음날 ${actualTime}`;
-        } else {
-          fullDateTime = `${selectedDate}T${time}`;
+        // isPast 로직 수정: selectedDate가 오늘인지, 이전인지, 미래인지에 따라 다르게 처리
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // 오늘 날짜의 시작
+        const selectedDateObj = new Date(selectedDate);
+        selectedDateObj.setHours(0, 0, 0, 0); // 선택된 날짜의 시작
+
+        let isPast = false;
+        if (selectedDateObj < today) {
+          // 선택된 날짜가 오늘 이전이면 모두 과거
+          isPast = true;
+        } else if (selectedDateObj.getTime() === today.getTime()) {
+          // 선택된 날짜가 오늘이면 현재 시간과 비교
+          isPast = slotDateTime < now;
         }
-        slotDateTime = new Date(fullDateTime);
+        // 선택된 날짜가 미래면 isPast는 false (초기값)
 
-        const isTodaySelected =
-          new Date(selectedDate).toDateString() === new Date().toDateString();
-        let isPast;
-        if (time.startsWith("nextDay")) {
-          isPast = false;
-        } else {
-          isPast = isTodaySelected && slotDateTime < now;
-        }
+        const isBooked = bookedSet.has(`${selectedDate}T${time}`);
 
-        const isBooked = bookedSet.has(fullDateTime);
         return {
-          id: `${selectedDate}-${time}-${selectedItem.pk}`, // 고유 ID
-          start_time: fullDateTime,
-          display_time: displayTime,
+          id: `${selectedDate}-${time}-${selectedItem.pk}-cycle`,
+          start_time: `${selectedDate}T${time}`, // API 전송용 (초 제외)
+          display_time: time, // 화면 표시용
           is_booked: isBooked,
           is_past: isPast,
           index: index,
@@ -178,6 +172,7 @@ const CycleGrid = () => {
   };
 
   const fetchStatuses = async () => {
+    // (기존 로직과 동일)
     try {
       const res = await fetchCycleStatuses();
       const apiData = res.data;
@@ -231,6 +226,7 @@ const CycleGrid = () => {
   }, [selectedDate, selectedItem, selectedDuration]);
 
   const handleClick = (itemData) => {
+    // (기존 로직과 동일)
     const itemName = itemData.name || `사이클 ${itemData.number}`;
     if (itemData.isLoading) {
       alert("사이클 정보를 가져오는 중입니다. 잠시 후 다시 시도해주세요.");
@@ -284,6 +280,7 @@ const CycleGrid = () => {
   };
 
   const getStatusStyle = (statusData) => {
+    // (기존 로직과 동일)
     let backgroundColor = "#BEBEBE";
     let cursor = "default";
     let textColor = "#333";
@@ -389,16 +386,18 @@ const CycleGrid = () => {
                         if (slot.id === selectedStartTimeSlot.id) {
                           className += " time-slot-selected";
                         }
+                        // 60분 선택 시 다음 슬롯도 선택 표시 (유효성 검사는 handleTimeSlotClick에서 이미 수행)
                         if (
                           selectedDuration === 60 &&
                           selectedStartTimeSlot.index + 1 === index &&
+                          timeSlots[selectedStartTimeSlot.index + 1] && // 다음 슬롯 존재 확인
                           slot.id ===
-                            timeSlots[selectedStartTimeSlot.index + 1]?.id
+                            timeSlots[selectedStartTimeSlot.index + 1].id &&
+                          !timeSlots[selectedStartTimeSlot.index + 1]
+                            .is_booked && // 다음 슬롯이 예약되지 않았는지
+                          !timeSlots[selectedStartTimeSlot.index + 1].is_past // 다음 슬롯이 과거가 아닌지
                         ) {
-                          if (!slot.is_booked && !slot.is_past) {
-                            // 다음 슬롯도 예약/과거가 아니어야 선택됨
-                            className += " time-slot-selected";
-                          }
+                          className += " time-slot-selected";
                         }
                       }
                       return (

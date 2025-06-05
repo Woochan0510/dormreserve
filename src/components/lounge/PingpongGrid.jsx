@@ -31,7 +31,7 @@ const PingPongGrid = () => {
   const [selectedStartTimeSlot, setSelectedStartTimeSlot] = useState(null);
 
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  const allTimeSlots = getTimeSlots();
+  const allGeneratedTimeSlots = getTimeSlots();
 
   function getTimeSlots() {
     const slots = [];
@@ -42,8 +42,6 @@ const PingPongGrid = () => {
         slots.push(`${hh}:${mm}`);
       }
     }
-    slots.push(`nextDay00:00`);
-    slots.push(`nextDay00:30`);
     return slots;
   }
 
@@ -98,40 +96,27 @@ const PingPongGrid = () => {
         })
       );
       const now = new Date();
-      const processedSlots = allTimeSlots.map((time, index) => {
-        let fullDateTime;
-        let displayTime = time;
-        let slotDateTime;
+      const processedSlots = allGeneratedTimeSlots.map((time, index) => {
+        const fullDateTimeString = `${selectedDate}T${time}:00`;
+        const slotDateTime = new Date(fullDateTimeString);
 
-        if (time.startsWith("nextDay")) {
-          const actualTime = time.substring(7);
-          const nextDayDate = new Date(selectedDate);
-          nextDayDate.setDate(new Date(selectedDate).getDate() + 1);
-          const nextDayFormatted = `${nextDayDate.getFullYear()}-${String(
-            nextDayDate.getMonth() + 1
-          ).padStart(2, "0")}-${String(nextDayDate.getDate()).padStart(
-            2,
-            "0"
-          )}`;
-          fullDateTime = `${nextDayFormatted}T${actualTime}`;
-          displayTime = `다음날 ${actualTime}`;
-        } else {
-          fullDateTime = `${selectedDate}T${time}`;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const selectedDateObj = new Date(selectedDate);
+        selectedDateObj.setHours(0, 0, 0, 0);
+
+        let isPast = false;
+        if (selectedDateObj < today) {
+          isPast = true;
+        } else if (selectedDateObj.getTime() === today.getTime()) {
+          isPast = slotDateTime < now;
         }
-        slotDateTime = new Date(fullDateTime);
-        const isPast =
-          slotDateTime < now &&
-          !(
-            slotDateTime.getHours() === 0 &&
-            (slotDateTime.getMinutes() === 0 ||
-              slotDateTime.getMinutes() === 30) &&
-            slotDateTime.getDate() === new Date(now).getDate() + 1
-          );
-        const isBooked = bookedSet.has(fullDateTime);
+
+        const isBooked = bookedSet.has(`${selectedDate}T${time}`);
         return {
-          id: `${selectedDate}-${time}-${selectedItem.pk}`,
-          start_time: fullDateTime,
-          display_time: displayTime,
+          id: `${selectedDate}-${time}-${selectedItem.pk}-pingpong`,
+          start_time: `${selectedDate}T${time}`,
+          display_time: time,
           is_booked: isBooked,
           is_past: isPast,
           index: index,
@@ -172,6 +157,7 @@ const PingPongGrid = () => {
   };
 
   const fetchStatuses = async () => {
+    // (기존 로직과 동일)
     try {
       const res = await fetchPingPongTableStatuses();
       const apiData = res.data;
@@ -224,6 +210,7 @@ const PingPongGrid = () => {
   }, [selectedDate, selectedItem, selectedDuration]);
 
   const handleClick = (itemData) => {
+    // (기존 로직과 동일)
     const itemName = itemData.name || `탁구대 ${itemData.number}`;
     if (itemData.isLoading) {
       alert("탁구대 정보를 가져오는 중입니다. 잠시 후 다시 시도해주세요.");
@@ -274,6 +261,7 @@ const PingPongGrid = () => {
     setSelectedStartTimeSlot(null);
   };
   const getStatusStyle = (statusData) => {
+    // (기존 로직과 동일)
     let backgroundColor = "#BEBEBE";
     let cursor = "default";
     let textColor = "#333";
