@@ -1,7 +1,7 @@
 // src/components/layout/SharedHeader.jsx
-import React, { useState } from "react"; // useState 임포트
-import { useNavigate, Link } from "react-router-dom";
-import { logoutUser, changePassword } from "../../services/authService"; // changePassword 임포트
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom"; // Link 임포트 확인
+import { logoutUser, changePassword } from "../../services/authService";
 import "../../styles/SharedHeader.css";
 
 const SharedHeader = ({ pageTitle, showLegend = false }) => {
@@ -18,13 +18,15 @@ const SharedHeader = ({ pageTitle, showLegend = false }) => {
     try {
       await logoutUser();
       console.log("로그아웃 성공");
+      localStorage.removeItem("authToken"); // 추가: 로그아웃 시 토큰 확실히 제거
       navigate("/");
     } catch (error) {
       console.error(
         "로그아웃 실패:",
         error.response ? error.response.data : error.message
       );
-      navigate("/"); // 실패 시에도 로그인 페이지로 이동
+      localStorage.removeItem("authToken"); // 실패 시에도 토큰 제거
+      navigate("/");
     }
   };
 
@@ -66,12 +68,16 @@ const SharedHeader = ({ pageTitle, showLegend = false }) => {
     setIsPasswordChangeLoading(true);
     try {
       await changePassword(oldPassword, newPassword);
-      setPasswordSuccess("비밀번호가 성공적으로 변경되었습니다.");
+      setPasswordSuccess(
+        "비밀번호가 성공적으로 변경되었습니다. 다시 로그인해주세요."
+      );
       setOldPassword("");
       setNewPassword("");
       setNewPasswordCheck("");
-      // 성공 후 몇 초 뒤 모달을 닫거나, 사용자가 직접 닫도록 둘 수 있습니다.
-      // setTimeout(closePasswordModal, 2000);
+      // 비밀번호 변경 성공 시 로그아웃 처리 및 로그인 페이지로 이동
+      setTimeout(async () => {
+        await handleLogout(); // 기존 로그아웃 함수 재활용
+      }, 2000); // 2초 후 로그아웃
     } catch (error) {
       const errorMsg =
         error.response?.data?.old_password ||
@@ -79,8 +85,8 @@ const SharedHeader = ({ pageTitle, showLegend = false }) => {
         error.response?.data?.detail ||
         "비밀번호 변경에 실패했습니다. 기존 비밀번호를 확인해주세요.";
       setPasswordError(errorMsg);
-      setNewPassword("");
-      setNewPasswordCheck("");
+      setNewPassword(""); // 오류 시 새 비밀번호 필드 초기화
+      setNewPasswordCheck(""); // 오류 시 새 비밀번호 확인 필드 초기화
     } finally {
       setIsPasswordChangeLoading(false);
     }
@@ -114,9 +120,13 @@ const SharedHeader = ({ pageTitle, showLegend = false }) => {
             </div>
           )}
           <div className="auth-buttons-container">
+            {/* "내 예약" 링크 추가 */}
+            <Link to="/my-bookings" className="header-nav-link">
+              내 예약
+            </Link>
             <button
               className="password-change-button"
-              onClick={openPasswordModal} // 모달 열기 함수로 변경
+              onClick={openPasswordModal}
             >
               비밀번호 변경
             </button>
@@ -144,6 +154,7 @@ const SharedHeader = ({ pageTitle, showLegend = false }) => {
                   onChange={(e) => setOldPassword(e.target.value)}
                   placeholder="현재 비밀번호"
                   disabled={isPasswordChangeLoading}
+                  autoComplete="current-password"
                 />
               </div>
               <div className="input-group">
@@ -155,6 +166,7 @@ const SharedHeader = ({ pageTitle, showLegend = false }) => {
                   onChange={(e) => setNewPassword(e.target.value)}
                   placeholder="새 비밀번호 (8자 이상)"
                   disabled={isPasswordChangeLoading}
+                  autoComplete="new-password"
                 />
               </div>
               <div className="input-group">
@@ -166,6 +178,7 @@ const SharedHeader = ({ pageTitle, showLegend = false }) => {
                   onChange={(e) => setNewPasswordCheck(e.target.value)}
                   placeholder="새 비밀번호 확인"
                   disabled={isPasswordChangeLoading}
+                  autoComplete="new-password"
                 />
               </div>
               {passwordError && (

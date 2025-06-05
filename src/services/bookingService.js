@@ -6,7 +6,6 @@ export const fetchInductionStatuses = async () => {
 
 export const fetchInductionTimeSlots = async (inductionId, date) => {
   return apiClient.get(`api/v1/kitchen/inductions/${inductionId}/timeslots/`, {
-    //
     params: { date: date },
   });
 };
@@ -18,7 +17,7 @@ export const reserveInductionSlot = async (
 ) => {
   return apiClient.post(`api/v1/kitchen/inductions/${inductionId}/book/`, {
     start_time: startTime,
-    duration_minutes: durationMinutes,
+    duration_minute: durationMinutes,
   });
 };
 
@@ -60,11 +59,10 @@ export const reserveTreadmillSlot = async (
 ) => {
   return apiClient.post(`api/v1/gym/treadmills/${treadmillId}/book/`, {
     start_time: startTime,
-    duration_minutes: durationMinutes, // Ensure consistency
+    duration_minutes: durationMinutes,
   });
 };
 
-// Lounge - Arcade Machines
 export const fetchArcadeMachineStatuses = async () => {
   return apiClient.get("api/v1/lounge/arcade-machines/");
 };
@@ -87,12 +85,11 @@ export const reserveArcadeMachineSlot = async (
     `api/v1/lounge/arcade-machines/${arcadeMachineId}/book/`,
     {
       start_time: startTime,
-      duration_minutes: durationMinutes, // Ensure consistency
+      duration_minutes: durationMinutes,
     }
   );
 };
 
-// Lounge - Ping Pong Tables
 export const fetchPingPongTableStatuses = async () => {
   return apiClient.get("api/v1/lounge/ping-pong-tables/");
 };
@@ -115,7 +112,11 @@ export const reservePingPongTableSlot = async (
     `api/v1/lounge/ping-pong-tables/${pingPongTableId}/book/`,
     {
       start_time: startTime,
-      duration_minutes: durationMinutes, // Ensure consistency
+      duration_minutes: durationMinutes,
     }
   );
+};
+
+export const fetchMyBookings = async () => {
+  return apiClient.get("api/v1/users/my-bookings/");
 };

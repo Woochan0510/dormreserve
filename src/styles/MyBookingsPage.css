@@ -1,0 +1,76 @@
+.my-bookings-container {
+  padding: 20px;
+  max-width: 800px;
+  margin: 20px auto;
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+
+.my-bookings-container h2 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 30px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid #eee;
+}
+
+.booking-section {
+  margin-bottom: 30px;
+  padding: 15px;
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+}
+
+.booking-section h3 {
+  color: #0056b3; /* 광운대학교 색상 활용 */
+  margin-top: 0;
+  margin-bottom: 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.booking-section ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+.booking-section li {
+  background-color: #fdfdfd;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  padding: 15px;
+  margin-bottom: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.booking-section li p {
+  margin: 5px 0;
+  font-size: 0.95em;
+  color: #555;
+}
+
+.booking-section li p strong {
+  color: #333;
+  margin-right: 5px;
+}
+
+.my-bookings-container .loading,
+.my-bookings-container .error {
+  text-align: center;
+  font-size: 1.1em;
+  padding: 20px;
+  color: #777;
+}
+
+.my-bookings-container .error {
+  color: #dc3545; /* 빨간색 계열 (에러) */
+}
+
+.no-bookings-message {
+  text-align: center;
+  font-size: 1.1em;
+  color: #777;
+  padding: 20px 0;
+}
