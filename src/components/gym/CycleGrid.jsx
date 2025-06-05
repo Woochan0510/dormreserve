@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import "../../styles/GymPage.css"; // CycleGrid.css 대신 GymPage.css를 사용하도록 변경
+import "../../styles/GymPage.css";
 import {
   fetchCycleStatuses,
   fetchCycleTimeSlots,
@@ -30,38 +30,13 @@ const CycleGrid = () => {
   const [timeSlots, setTimeSlots] = useState([]);
   const [isTimeSlotsLoading, setIsTimeSlotsLoading] = useState(false);
   const [selectedDuration, setSelectedDuration] = useState(30);
+  const [selectedStartTimeSlot, setSelectedStartTimeSlot] = useState(null);
 
-  const getStatusStyle = (statusData) => {
-    let backgroundColor = "#BEBEBE";
-    let cursor = "default";
-    let textColor = "#333";
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const allTimeSlots = getTimeSlots(); // 컴포넌트 스코프에서 한 번만 생성
 
-    if (statusData) {
-      if (statusData.isLoading) {
-        // 로딩 중 스타일은 기본값 유지
-      } else if (statusData.fetchFailed) {
-        backgroundColor = "#D3D3D3"; // 에러 시 연한 회색
-      } else if (statusData.is_using === true) {
-        backgroundColor = "red";
-        cursor = "not-allowed";
-        textColor = "#fff";
-      } else if (
-        statusData.is_available === false ||
-        (statusData.apiMissing && !statusData.fetchFailed)
-      ) {
-        backgroundColor = "yellow"; // 수리중 또는 API 정보 누락
-        cursor = "not-allowed";
-        textColor = "#333";
-      } else if (statusData.is_available === true && !statusData.apiMissing) {
-        backgroundColor = "green";
-        cursor = "pointer";
-        textColor = "#fff";
-      }
-    }
-    return { backgroundColor, cursor, color: textColor };
-  };
-
-  const getTimeSlots = () => {
+  // getTimeSlots 함수는 컴포넌트 외부에 있거나 useCallback으로 최적화 가능
+  function getTimeSlots() {
     const slots = [];
     for (let hour = 5; hour < 24; hour++) {
       for (let min = 0; min < 60; min += 30) {
@@ -73,18 +48,23 @@ const CycleGrid = () => {
     slots.push(`nextDay00:00`);
     slots.push(`nextDay00:30`);
     return slots;
-  };
+  }
 
-  const reserveSlot = async (startTime) => {
-    if (!selectedItem || selectedItem.pk === null) {
-      alert("예약할 사이클을 선택해주세요.");
+  const handleReserveClick = async () => {
+    if (!selectedStartTimeSlot) {
+      alert("예약할 시간을 선택해주세요.");
       return;
     }
     setIsTimeSlotsLoading(true);
     try {
-      await reserveCycleSlotAPI(selectedItem.pk, startTime, selectedDuration);
+      await reserveCycleSlotAPI(
+        selectedItem.pk,
+        selectedStartTimeSlot.start_time,
+        selectedDuration
+      );
       alert(`예약이 완료되었습니다. (시간: ${selectedDuration}분)`);
-      await fetchSlotsForSelectedItem(); // Corrected function name
+      setSelectedStartTimeSlot(null);
+      await fetchSlotsForSelectedItem();
       fetchStatuses();
     } catch (error) {
       console.error("예약 실패:", error);
@@ -100,10 +80,10 @@ const CycleGrid = () => {
   };
 
   const fetchSlotsForSelectedItem = async () => {
-    // Renamed from fetchSlotsForSelectedDateAndInduction
     if (!selectedDate || !selectedItem || selectedItem.pk === null) return;
     setIsTimeSlotsLoading(true);
     setTimeSlots([]);
+    setSelectedStartTimeSlot(null);
     try {
       const res = await fetchCycleTimeSlots(selectedItem.pk, selectedDate);
       const bookedSet = new Set(
@@ -119,10 +99,10 @@ const CycleGrid = () => {
       );
 
       const now = new Date();
-      const allSlots = getTimeSlots().map((time) => {
+      const processedSlots = allTimeSlots.map((time, index) => {
         let fullDateTime;
-        let slotDateTime;
         let displayTime = time;
+        let slotDateTime;
 
         if (time.startsWith("nextDay")) {
           const actualTime = time.substring(7);
@@ -152,18 +132,48 @@ const CycleGrid = () => {
 
         const isBooked = bookedSet.has(fullDateTime);
         return {
+          id: `${selectedDate}-${time}-${selectedItem.pk}`, // 고유 ID
           start_time: fullDateTime,
+          display_time: displayTime,
           is_booked: isBooked,
           is_past: isPast,
-          display_time: displayTime,
+          index: index,
         };
       });
-      setTimeSlots(allSlots);
+      setTimeSlots(processedSlots);
     } catch (error) {
       console.error("시간 슬롯 불러오기 실패", error);
       setTimeSlots([]);
     } finally {
       setIsTimeSlotsLoading(false);
+    }
+  };
+
+  const handleTimeSlotClick = (clickedSlot) => {
+    if (clickedSlot.is_booked || clickedSlot.is_past || isTimeSlotsLoading) {
+      return;
+    }
+
+    if (selectedDuration === 60) {
+      const nextSlotIndex = clickedSlot.index + 1;
+      if (nextSlotIndex < timeSlots.length) {
+        const nextSlot = timeSlots[nextSlotIndex];
+        const clickedSlotTime = new Date(clickedSlot.start_time);
+        const nextSlotTime = new Date(nextSlot.start_time);
+        const timeDiff = (nextSlotTime - clickedSlotTime) / (1000 * 60);
+
+        if (timeDiff === 30 && !nextSlot.is_booked && !nextSlot.is_past) {
+          setSelectedStartTimeSlot(clickedSlot);
+        } else {
+          alert("60분 예약의 경우, 연속된 두 개의 빈 슬롯이 필요합니다.");
+          setSelectedStartTimeSlot(null);
+        }
+      } else {
+        alert("선택한 시간부터 60분 예약이 불가능합니다 (시간 범위 초과).");
+        setSelectedStartTimeSlot(null);
+      }
+    } else {
+      setSelectedStartTimeSlot(clickedSlot);
     }
   };
 
@@ -185,7 +195,7 @@ const CycleGrid = () => {
         } else {
           return {
             ...def,
-            is_available: false, // API에 정보가 없으면 기본적으로 사용 불가(수리중)로 간주
+            is_available: false,
             is_using: null,
             isLoading: false,
             fetchFailed: false,
@@ -217,11 +227,11 @@ const CycleGrid = () => {
     if (selectedItem && selectedDate) {
       fetchSlotsForSelectedItem();
     }
-  }, [selectedDate, selectedItem]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate, selectedItem, selectedDuration]);
 
   const handleClick = (itemData) => {
     const itemName = itemData.name || `사이클 ${itemData.number}`;
-
     if (itemData.isLoading) {
       alert("사이클 정보를 가져오는 중입니다. 잠시 후 다시 시도해주세요.");
       return;
@@ -234,24 +244,19 @@ const CycleGrid = () => {
       alert(`${itemName}은(는) 현재 사용 중입니다.`);
       return;
     }
-
     if (
       itemData.is_available === false ||
-      (itemData.apiMissing && !itemData.fetchFailed) // apiMissing이 true이고 fetchFailed가 false인 경우 (API에 데이터가 없는 경우)
+      (itemData.apiMissing && !itemData.fetchFailed)
     ) {
       alert(`${itemName}은(는) 현재 사용할 수 없습니다 (수리중).`);
       return;
     }
-
     if (itemData.is_available === null) {
-      // is_available이 null인 경우 (초기 상태 또는 API 호출 실패)
       alert(
         `${itemName}의 상태를 정확히 알 수 없어 예약할 수 없습니다. 새로고침 후 다시 시도해주세요.`
       );
       return;
     }
-
-    // is_available이 true이고, API에 데이터가 있는 경우 (apiMissing: false)
     if (itemData.is_available === true && !itemData.apiMissing) {
       const today = new Date();
       const year = today.getFullYear();
@@ -262,6 +267,7 @@ const CycleGrid = () => {
       setSelectedDate(formattedToday);
       setSelectedItem(itemData);
       setSelectedDuration(30);
+      setSelectedStartTimeSlot(null);
       setIsModalOpen(true);
     } else {
       alert(`${itemName}의 상태가 예약 가능한 상태가 아닙니다.`);
@@ -272,27 +278,54 @@ const CycleGrid = () => {
     setSelectedDate(e.target.value);
   };
 
+  const handleDurationChange = (duration) => {
+    setSelectedDuration(duration);
+    setSelectedStartTimeSlot(null);
+  };
+
+  const getStatusStyle = (statusData) => {
+    let backgroundColor = "#BEBEBE";
+    let cursor = "default";
+    let textColor = "#333";
+    if (statusData) {
+      if (statusData.isLoading) {
+      } else if (statusData.fetchFailed) {
+        backgroundColor = "#D3D3D3";
+      } else if (statusData.is_using === true) {
+        backgroundColor = "red";
+        cursor = "not-allowed";
+        textColor = "#fff";
+      } else if (
+        statusData.is_available === false ||
+        (statusData.apiMissing && !statusData.fetchFailed)
+      ) {
+        backgroundColor = "yellow";
+        cursor = "not-allowed";
+        textColor = "#333";
+      } else if (statusData.is_available === true && !statusData.apiMissing) {
+        backgroundColor = "green";
+        cursor = "pointer";
+        textColor = "#fff";
+      }
+    }
+    return { backgroundColor, cursor, color: textColor };
+  };
+
   return (
     <div className="gym-items-row-container">
-      {" "}
-      {/* GymPage.css의 스타일 사용 */}
       {statuses.map((itemStatus) => {
         const { backgroundColor, cursor, color } = getStatusStyle(itemStatus);
         const itemName = itemStatus.name || `사이클 ${itemStatus.number}`;
         let displayText = itemName;
-
         if (itemStatus.isLoading) {
           displayText = "로딩중...";
         } else if (itemStatus.fetchFailed) {
           displayText = `${itemName} (상태 확인 실패)`;
-        } else if (itemStatus.apiMissing && !itemStatus.fetchFailed) {
-          // displayText = `${itemName} (수리중)`; // API 데이터 없는 경우 '수리중'으로 표시
         }
-
         return (
           <div
             key={itemStatus.pk}
-            className="item-box cycleTable" // GymPage.css의 스타일 사용
+            className="item-box cycleTable"
             style={{ backgroundColor, cursor, color }}
             onClick={() => handleClick(itemStatus)}
           >
@@ -300,13 +333,14 @@ const CycleGrid = () => {
           </div>
         );
       })}
+
       {isModalOpen && selectedItem && (
         <div className="modal-overlay">
           <div className="modal">
             <h2>{selectedItem.name || `사이클 ${selectedItem.number}`} 예약</h2>
-            <label htmlFor="date-select">날짜 선택:</label>
+            <label htmlFor="date-select-cycle">날짜 선택:</label>
             <select
-              id="date-select"
+              id="date-select-cycle"
               onChange={handleDateChange}
               value={selectedDate || ""}
               disabled={isTimeSlotsLoading}
@@ -328,7 +362,8 @@ const CycleGrid = () => {
                 });
                 return (
                   <option key={index} value={formattedDate}>
-                    {formattedDate} ({weekday})
+                    {" "}
+                    {formattedDate} ({weekday}){" "}
                   </option>
                 );
               })}
@@ -339,42 +374,43 @@ const CycleGrid = () => {
                 <h4>{selectedDate} 시간 선택</h4>
                 {isTimeSlotsLoading ? (
                   <p className="loading-message">
+                    {" "}
                     시간 정보를 불러오는 중입니다...
                   </p>
                 ) : timeSlots.length > 0 ? (
                   <ul>
-                    {timeSlots.map((slot, idx) => (
-                      <li
-                        key={idx}
-                        style={{
-                          color: slot.is_booked
-                            ? "red"
-                            : slot.is_past
-                            ? "grey"
-                            : "green",
-                          cursor:
-                            slot.is_booked || slot.is_past || isTimeSlotsLoading
-                              ? "not-allowed"
-                              : "pointer",
-                          backgroundColor: slot.is_booked
-                            ? "#ffdddd"
-                            : slot.is_past
-                            ? "#f0f0f0"
-                            : "#ddffdd",
-                        }}
-                        onClick={() => {
-                          if (
-                            !slot.is_booked &&
-                            !slot.is_past &&
-                            !isTimeSlotsLoading
-                          ) {
-                            reserveSlot(slot.start_time);
+                    {timeSlots.map((slot, index) => {
+                      let className = "time-slot-item";
+                      if (slot.is_booked) className += " time-slot-booked";
+                      else if (slot.is_past) className += " time-slot-past";
+                      else className += " time-slot-available";
+
+                      if (selectedStartTimeSlot) {
+                        if (slot.id === selectedStartTimeSlot.id) {
+                          className += " time-slot-selected";
+                        }
+                        if (
+                          selectedDuration === 60 &&
+                          selectedStartTimeSlot.index + 1 === index &&
+                          slot.id ===
+                            timeSlots[selectedStartTimeSlot.index + 1]?.id
+                        ) {
+                          if (!slot.is_booked && !slot.is_past) {
+                            // 다음 슬롯도 예약/과거가 아니어야 선택됨
+                            className += " time-slot-selected";
                           }
-                        }}
-                      >
-                        {slot.display_time}
-                      </li>
-                    ))}
+                        }
+                      }
+                      return (
+                        <li
+                          key={slot.id}
+                          className={className}
+                          onClick={() => handleTimeSlotClick(slot)}
+                        >
+                          {slot.display_time}
+                        </li>
+                      );
+                    })}
                   </ul>
                 ) : (
                   <p>예약 가능한 시간대가 없거나 불러올 수 없습니다.</p>
@@ -392,7 +428,7 @@ const CycleGrid = () => {
                       name="duration-cycle"
                       value="30"
                       checked={selectedDuration === 30}
-                      onChange={() => setSelectedDuration(30)}
+                      onChange={() => handleDurationChange(30)}
                       disabled={isTimeSlotsLoading}
                     />
                     <label
@@ -409,7 +445,7 @@ const CycleGrid = () => {
                       name="duration-cycle"
                       value="60"
                       checked={selectedDuration === 60}
-                      onChange={() => setSelectedDuration(60)}
+                      onChange={() => handleDurationChange(60)}
                       disabled={isTimeSlotsLoading}
                     />
                     <label
@@ -421,13 +457,25 @@ const CycleGrid = () => {
                   </div>
                 </div>
               </div>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="modal-close-button"
-                disabled={isTimeSlotsLoading}
-              >
-                닫기
-              </button>
+              <div className="modal-action-buttons">
+                <button
+                  className="modal-reserve-button"
+                  onClick={handleReserveClick}
+                  disabled={!selectedStartTimeSlot || isTimeSlotsLoading}
+                >
+                  예약하기
+                </button>
+                <button
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setSelectedStartTimeSlot(null);
+                  }}
+                  className="modal-close-button"
+                  disabled={isTimeSlotsLoading}
+                >
+                  닫기
+                </button>
+              </div>
             </div>
           </div>
         </div>

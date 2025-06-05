@@ -31,8 +31,11 @@ const CookGrid = () => {
   const [timeSlots, setTimeSlots] = useState([]);
   const [isTimeSlotsLoading, setIsTimeSlotsLoading] = useState(false);
   const [selectedDuration, setSelectedDuration] = useState(30);
+  const [selectedStartTimeSlot, setSelectedStartTimeSlot] = useState(null);
 
-  const getTimeSlots = () => {
+  const allTimeSlots = getTimeSlots();
+
+  function getTimeSlots() {
     const slots = [];
     for (let hour = 0; hour < 24; hour++) {
       for (let min = 0; min < 60; min += 30) {
@@ -42,24 +45,24 @@ const CookGrid = () => {
       }
     }
     return slots;
-  };
+  }
 
-  const reserveSlot = async (startTime) => {
-    if (!selectedInduction) {
-      alert("예약할 인덕션을 선택해주세요.");
+  const handleReserveClick = async () => {
+    if (!selectedStartTimeSlot) {
+      alert("예약할 시간을 선택해주세요.");
       return;
     }
-    setIsTimeSlotsLoading(true); // 예약 시도 시 로딩 상태 활성화
+    setIsTimeSlotsLoading(true);
     try {
       await reserveInductionSlotAPI(
         selectedInduction,
-        startTime,
+        selectedStartTimeSlot.start_time,
         selectedDuration
       );
       alert(`예약이 완료되었습니다. (시간: ${selectedDuration}분)`);
+      setSelectedStartTimeSlot(null);
       await fetchSlotsForSelectedDateAndInduction();
       fetchStatuses();
-      // 예약 성공 후 모달을 바로 닫지 않거나, 필요시 setIsModalOpen(false); 추가
     } catch (error) {
       console.error("예약 실패:", error);
       alert(
@@ -69,7 +72,7 @@ const CookGrid = () => {
             "알 수 없는 에러가 발생했습니다.")
       );
     } finally {
-      setIsTimeSlotsLoading(false); // 로딩 상태 비활성화
+      setIsTimeSlotsLoading(false);
     }
   };
 
@@ -77,6 +80,7 @@ const CookGrid = () => {
     if (!selectedDate || !selectedInduction) return;
     setIsTimeSlotsLoading(true);
     setTimeSlots([]);
+    setSelectedStartTimeSlot(null);
     try {
       const res = await fetchInductionTimeSlots(
         selectedInduction,
@@ -95,23 +99,55 @@ const CookGrid = () => {
       );
 
       const now = new Date();
-      const allSlots = getTimeSlots().map((time) => {
+      const processedSlots = allTimeSlots.map((time, index) => {
         const fullDateTime = `${selectedDate}T${time}`;
         const slotDateTime = new Date(fullDateTime);
         const isPast = slotDateTime < now;
         const isBooked = bookedSet.has(fullDateTime);
         return {
+          id: `${selectedDate}-${time}`,
           start_time: fullDateTime,
+          display_time: time,
           is_booked: isBooked,
           is_past: isPast,
+          index: index,
         };
       });
-      setTimeSlots(allSlots);
+      setTimeSlots(processedSlots);
     } catch (error) {
       console.error("시간 슬롯 불러오기 실패", error);
       setTimeSlots([]);
     } finally {
       setIsTimeSlotsLoading(false);
+    }
+  };
+
+  const handleTimeSlotClick = (clickedSlot) => {
+    if (clickedSlot.is_booked || clickedSlot.is_past || isTimeSlotsLoading) {
+      return;
+    }
+
+    if (selectedDuration === 60) {
+      const nextSlotIndex = clickedSlot.index + 1;
+      if (nextSlotIndex < timeSlots.length) {
+        const nextSlot = timeSlots[nextSlotIndex];
+
+        const clickedSlotTime = new Date(clickedSlot.start_time);
+        const nextSlotTime = new Date(nextSlot.start_time);
+        const timeDiff = (nextSlotTime - clickedSlotTime) / (1000 * 60);
+
+        if (timeDiff === 30 && !nextSlot.is_booked && !nextSlot.is_past) {
+          setSelectedStartTimeSlot(clickedSlot);
+        } else {
+          alert("60분 예약의 경우, 연속된 두 개의 빈 슬롯이 필요합니다.");
+          setSelectedStartTimeSlot(null);
+        }
+      } else {
+        alert("선택한 시간부터 60분 예약이 불가능합니다 (시간 범위 초과).");
+        setSelectedStartTimeSlot(null);
+      }
+    } else {
+      setSelectedStartTimeSlot(clickedSlot);
     }
   };
 
@@ -144,7 +180,7 @@ const CookGrid = () => {
     if (selectedInduction && selectedDate) {
       fetchSlotsForSelectedDateAndInduction();
     }
-  }, [selectedDate, selectedInduction]);
+  }, [selectedDate, selectedInduction, selectedDuration]);
 
   const handleInductionClick = (inductionPk) => {
     if (inductionPk === null) return;
@@ -168,11 +204,17 @@ const CookGrid = () => {
     setSelectedDate(formattedToday);
     setSelectedInduction(inductionPk);
     setSelectedDuration(30);
+    setSelectedStartTimeSlot(null);
     setIsModalOpen(true);
   };
 
   const handleDateChange = (e) => {
     setSelectedDate(e.target.value);
+  };
+
+  const handleDurationChange = (duration) => {
+    setSelectedDuration(duration);
+    setSelectedStartTimeSlot(null);
   };
 
   const getInductionStyle = (inductionPk) => {
@@ -234,9 +276,9 @@ const CookGrid = () => {
         <div className="modal-overlay">
           <div className="modal">
             <h2>인덕션 {selectedInduction}번 예약</h2>
-            <label htmlFor="date-select">날짜 선택:</label>
+            <label htmlFor="date-select-cook">날짜 선택:</label>
             <select
-              id="date-select"
+              id="date-select-cook"
               onChange={handleDateChange}
               value={selectedDate || ""}
               disabled={isTimeSlotsLoading}
@@ -273,41 +315,38 @@ const CookGrid = () => {
                   </p>
                 ) : timeSlots.length > 0 ? (
                   <ul>
-                    {timeSlots.map((slot, index) => (
-                      <li
-                        key={index}
-                        style={{
-                          color: slot.is_booked
-                            ? "red"
-                            : slot.is_past
-                            ? "grey"
-                            : "green",
-                          cursor:
-                            slot.is_booked || slot.is_past || isTimeSlotsLoading
-                              ? "not-allowed"
-                              : "pointer",
-                          backgroundColor: slot.is_booked
-                            ? "#ffdddd"
-                            : slot.is_past
-                            ? "#f0f0f0"
-                            : "#ddffdd",
-                        }}
-                        onClick={() => {
-                          if (
-                            !slot.is_booked &&
-                            !slot.is_past &&
-                            !isTimeSlotsLoading
-                          ) {
-                            reserveSlot(slot.start_time);
+                    {timeSlots.map((slot, index) => {
+                      let className = "time-slot-item";
+                      if (slot.is_booked) className += " time-slot-booked";
+                      else if (slot.is_past) className += " time-slot-past";
+                      else className += " time-slot-available";
+
+                      if (selectedStartTimeSlot) {
+                        if (slot.id === selectedStartTimeSlot.id) {
+                          className += " time-slot-selected";
+                        }
+                        if (
+                          selectedDuration === 60 &&
+                          selectedStartTimeSlot.index + 1 === index &&
+                          slot.id ===
+                            timeSlots[selectedStartTimeSlot.index + 1]?.id
+                        ) {
+                          if (!slot.is_booked && !slot.is_past) {
+                            className += " time-slot-selected";
                           }
-                        }}
-                      >
-                        {new Date(slot.start_time).toLocaleTimeString([], {
-                          hour: "2-digit",
-                          minute: "2-digit",
-                        })}
-                      </li>
-                    ))}
+                        }
+                      }
+
+                      return (
+                        <li
+                          key={slot.id}
+                          className={className}
+                          onClick={() => handleTimeSlotClick(slot)}
+                        >
+                          {slot.display_time}
+                        </li>
+                      );
+                    })}
                   </ul>
                 ) : (
                   <p>예약 가능한 시간대가 없거나 불러올 수 없습니다.</p>
@@ -325,7 +364,7 @@ const CookGrid = () => {
                       name="duration-cook"
                       value="30"
                       checked={selectedDuration === 30}
-                      onChange={() => setSelectedDuration(30)}
+                      onChange={() => handleDurationChange(30)}
                       disabled={isTimeSlotsLoading}
                     />
                     <label htmlFor="duration30-cook" className="duration-label">
@@ -339,7 +378,7 @@ const CookGrid = () => {
                       name="duration-cook"
                       value="60"
                       checked={selectedDuration === 60}
-                      onChange={() => setSelectedDuration(60)}
+                      onChange={() => handleDurationChange(60)}
                       disabled={isTimeSlotsLoading}
                     />
                     <label htmlFor="duration60-cook" className="duration-label">
@@ -348,13 +387,25 @@ const CookGrid = () => {
                   </div>
                 </div>
               </div>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="modal-close-button"
-                disabled={isTimeSlotsLoading}
-              >
-                닫기
-              </button>
+              <div className="modal-action-buttons">
+                <button
+                  className="modal-reserve-button"
+                  onClick={handleReserveClick}
+                  disabled={!selectedStartTimeSlot || isTimeSlotsLoading}
+                >
+                  예약하기
+                </button>
+                <button
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setSelectedStartTimeSlot(null);
+                  }}
+                  className="modal-close-button"
+                  disabled={isTimeSlotsLoading}
+                >
+                  닫기
+                </button>
+              </div>
             </div>
           </div>
         </div>

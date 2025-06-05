@@ -1,4 +1,3 @@
-/* src/styles/GymPage.css */
 .base-page-container {
   display: flex;
   flex-direction: column;
@@ -16,12 +15,10 @@
 }
 
 .map {
-  /* Common map styling */
   border: 2px solid black;
   width: 90%;
-  max-width: 1000px; /* Max width for the map area */
-  /* min-height: 450px; /* Adjusted: Let content define height or use auto/fit-content */
-  min-height: fit-content; /* Or auto, or remove if not needed */
+  max-width: 1000px;
+  min-height: fit-content;
   padding: 15px;
   box-sizing: border-box;
   background-color: #f9f9f9;
@@ -30,71 +27,65 @@
 }
 
 .map.gym-map-layout {
-  /* Specific layout for gym page */
   display: flex;
-  flex-direction: column; /* Stack treadmill and cycle sections vertically */
-  gap: 30px; /* Space between treadmill and cycle sections */
+  flex-direction: column;
+  gap: 30px;
   padding: 20px;
-  box-sizing: border-box; /* Ensure padding doesn't add to width causing overflow */
+  box-sizing: border-box;
 }
 
 .gym-section {
   width: 100%;
   padding: 20px;
   border-radius: 8px;
-  background-color: #f0f2f5; /* Light background for the section */
+  background-color: #f0f2f5;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-  box-sizing: border-box; /* Ensure padding doesn't add to width */
+  box-sizing: border-box;
 }
 
 .treadmill-section {
-  /* Specific styles for treadmill section if any */
 }
-
 .cycle-section {
-  /* Specific styles for cycle section if any */
 }
 
 .section-title {
-  font-size: 1.6em; /* Larger title for sections */
+  font-size: 1.6em;
   font-weight: 600;
-  color: #334155; /* Darker, slightly desaturated blue */
+  color: #334155;
   margin-bottom: 25px;
   text-align: center;
   width: 100%;
   padding-bottom: 15px;
-  border-bottom: 2px solid #cbd5e0; /* Slightly more prominent border */
+  border-bottom: 2px solid #cbd5e0;
 }
 
 .gym-items-row-container {
   display: flex;
-  flex-direction: row; /* Arrange items horizontally */
-  flex-wrap: wrap; /* Allow items to wrap to the next line */
-  justify-content: center; /* Center items in the row */
-  gap: 15px; /* Reduced gap slightly */
-  width: 100%; /* Ensure it doesn't overflow its parent section */
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
+  width: 100%;
   box-sizing: border-box;
 }
 
-/* Common item styling, similar to LoungePage and CookPage */
 .item-box {
   display: flex;
   justify-content: center;
   align-items: center;
   border: 2px solid #555;
   font-weight: bold;
-  /* color: #fff; Removed default white text color, will be set by inline style in JSX */
   border-radius: 8px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
   text-align: center;
-  padding: 15px; /* Adjusted padding */
+  padding: 15px;
   transition: transform 0.2s ease, box-shadow 0.2s ease,
     background-color 0.3s ease;
-  min-height: 70px; /* Adjusted min-height */
+  min-height: 70px;
   box-sizing: border-box;
   cursor: pointer;
-  flex-grow: 0; /* Prevent items from growing too much */
-  flex-shrink: 0; /* Prevent items from shrinking too much if not wrapping */
+  flex-grow: 0;
+  flex-shrink: 0;
 }
 
 .item-box:hover {
@@ -102,29 +93,27 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
-/* Historical class from your CycleGrid.css and TreadMillGrid.css */
 .cycleTable {
-  /* TreadMillGrid.jsx 에서도 .cycleTable을 사용하고 있으므로 그대로 둡니다. */
+  /* TreadMillGrid.jsx에서도 이 클래스 사용 가능 */
   width: 100px;
-  height: 100px; /* Fixed height */
+  height: 100px;
   font-size: 0.9em;
 }
 
-/* Responsive adjustments for GymPage layout */
 @media (max-width: 768px) {
   .map.gym-map-layout {
-    padding: 10px; /* Reduced padding for smaller screens */
+    padding: 10px;
   }
   .gym-section {
     padding: 15px;
   }
   .gym-items-row-container {
-    gap: 10px; /* Smaller gap on tablets */
+    gap: 10px;
     justify-content: space-around;
   }
   .item-box.cycleTable {
-    width: calc(33.333% - 10px); /* Aim for 3 items per row on tablets */
-    max-width: 110px; /* Max size for tablet items */
+    width: calc(33.333% - 10px);
+    max-width: 110px;
     min-height: 90px;
     padding: 10px;
     font-size: 0.8em;
@@ -133,7 +122,7 @@
 
 @media (max-width: 480px) {
   .item-box.cycleTable {
-    width: calc(50% - 8px); /* Two items per row on very small screens */
+    width: calc(50% - 8px);
     max-width: 100px;
     min-height: 80px;
     font-size: 0.75em;
@@ -151,19 +140,25 @@
   }
   .duration-select-container {
     width: 100%;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
   }
   .duration-options {
+    flex-direction: row;
+    justify-content: space-around;
+    gap: 10px;
+  }
+  .modal-action-buttons {
     flex-direction: column;
+    width: 100%;
     gap: 8px;
   }
+  .modal-reserve-button,
   .modal-close-button {
     width: 100%;
-    margin-top: 0;
+    margin-left: 0;
   }
 }
 
-/* Modal styles - Copied/Adapted from CookGrid.css/LoungePage.css for consistency */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -202,7 +197,6 @@
   text-align: center;
   font-weight: 600;
 }
-
 .modal label {
   display: block;
   margin-bottom: 10px;
@@ -210,11 +204,10 @@
   font-size: 1em;
   color: #4a5568;
 }
-
 .modal select {
   width: 100%;
   padding: 14px 18px;
-  margin-bottom: 20px; /* 시간 선택 컨테이너와의 간격 */
+  margin-bottom: 20px;
   border: 1px solid #cbd5e0;
   border-radius: 8px;
   box-sizing: border-box;
@@ -237,9 +230,8 @@
   min-height: 150px;
   display: flex;
   flex-direction: column;
-  margin-bottom: 20px; /* 하단 컨트롤 영역과의 간격 */
+  margin-bottom: 20px;
 }
-
 .time-slots-container h4 {
   margin-top: 0;
   margin-bottom: 18px;
@@ -248,7 +240,6 @@
   text-align: center;
   font-weight: 500;
 }
-
 .loading-message {
   color: #718096;
   font-style: italic;
@@ -256,7 +247,6 @@
   text-align: center;
   font-size: 0.95em;
 }
-
 .time-slots-container ul {
   list-style: none;
   padding: 0;
@@ -270,8 +260,7 @@
   border: 1px solid #e2e8f0;
   border-radius: 6px;
 }
-
-.time-slots-container li {
+.time-slots-container li.time-slot-item {
   padding: 12px 8px;
   border: 1px solid #e2e8f0;
   border-radius: 6px;
@@ -281,31 +270,38 @@
   font-weight: 500;
   word-break: keep-all;
 }
-
-.time-slots-container li[style*="cursor: pointer"] {
+.time-slots-container li.time-slot-available {
   background-color: #ebf8ff;
   color: #2b6cb0;
   border-color: #90cdf4;
+  cursor: pointer;
 }
-.time-slots-container li[style*="cursor: pointer"]:hover {
+.time-slots-container li.time-slot-available:hover {
   background-color: #bee3f8;
   border-color: #63b3ed;
   transform: translateY(-2px);
   box-shadow: 0 3px 7px rgba(0, 0, 0, 0.12);
 }
-
-.time-slots-container li[style*="color: red"] {
+.time-slots-container li.time-slot-selected {
+  background-color: #a0c3e0;
+  color: #004494;
+  border-color: #0056b3;
+  font-weight: bold;
+  box-shadow: 0 0 5px rgba(0, 86, 179, 0.5);
+}
+.time-slots-container li.time-slot-booked {
   background-color: #fff5f5;
   color: #c53030;
   border-color: #fc8181;
   text-decoration: line-through;
+  cursor: not-allowed;
 }
-
-.time-slots-container li[style*="color: grey"] {
+.time-slots-container li.time-slot-past {
   background-color: #edf2f7;
   color: #a0aec0;
   border-color: #e2e8f0;
   text-decoration: line-through;
+  cursor: not-allowed;
 }
 
 .modal select:disabled,
@@ -320,37 +316,31 @@
   align-items: center;
   margin-top: 20px;
   padding-top: 15px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid #e2e8f0;
 }
-
 .duration-select-container {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
 }
-
 .duration-select-container > label {
   margin-bottom: 8px;
   font-weight: 500;
   font-size: 1em;
   color: #4a5568;
 }
-
 .duration-options {
   display: flex;
   gap: 15px;
 }
-
 .duration-options div {
   display: flex;
   align-items: center;
 }
-
 .duration-options input[type="radio"] {
   margin-right: 5px;
   cursor: pointer;
 }
-
 .duration-options .duration-label {
   font-size: 0.95em;
   color: #4a5568;
@@ -358,7 +348,28 @@
   font-weight: normal;
   margin-bottom: 0;
 }
-
+.modal-action-buttons {
+  display: flex;
+  gap: 10px;
+}
+.modal-reserve-button {
+  padding: 14px 25px;
+  background-color: #0056b3;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.05em;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+.modal-reserve-button:hover:not(:disabled) {
+  background-color: #004494;
+}
+.modal-reserve-button:disabled {
+  background-color: #a0c3e0;
+  cursor: not-allowed;
+}
 .modal-close-button {
   padding: 14px 25px;
   background-color: #718096;
@@ -367,12 +378,9 @@
   border-radius: 8px;
   cursor: pointer;
   font-size: 1.05em;
-  /* margin-top 제거 또는 조정됨 */
-  /* align-self 제거 또는 조정됨 */
   font-weight: 500;
   transition: background-color 0.2s ease;
 }
-
 .modal-close-button:hover {
   background-color: #4a5568;
 }

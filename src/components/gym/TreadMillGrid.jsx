@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import "../../styles/GymPage.css"; // TreadMillGrid.css 대신 GymPage.css를 사용하도록 변경
+import "../../styles/GymPage.css";
 import {
   fetchTreadmillStatuses,
   fetchTreadmillTimeSlots,
@@ -32,8 +32,12 @@ const TreadMillGrid = () => {
   const [timeSlots, setTimeSlots] = useState([]);
   const [isTimeSlotsLoading, setIsTimeSlotsLoading] = useState(false);
   const [selectedDuration, setSelectedDuration] = useState(30);
+  const [selectedStartTimeSlot, setSelectedStartTimeSlot] = useState(null);
 
-  const getTimeSlots = () => {
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const allTimeSlots = getTimeSlots();
+
+  function getTimeSlots() {
     const slots = [];
     for (let hour = 5; hour < 24; hour++) {
       for (let min = 0; min < 60; min += 30) {
@@ -45,21 +49,22 @@ const TreadMillGrid = () => {
     slots.push(`nextDay00:00`);
     slots.push(`nextDay00:30`);
     return slots;
-  };
+  }
 
-  const reserveSlot = async (startTime) => {
-    if (!selectedItem || selectedItem.pk === null) {
-      alert("예약할 트레드밀을 선택해주세요.");
+  const handleReserveClick = async () => {
+    if (!selectedStartTimeSlot) {
+      alert("예약할 시간을 선택해주세요.");
       return;
     }
     setIsTimeSlotsLoading(true);
     try {
       await reserveTreadmillSlotAPI(
         selectedItem.pk,
-        startTime,
+        selectedStartTimeSlot.start_time,
         selectedDuration
       );
       alert(`예약이 완료되었습니다. (시간: ${selectedDuration}분)`);
+      setSelectedStartTimeSlot(null);
       await fetchSlotsForSelectedItem();
       fetchStatuses();
     } catch (error) {
@@ -79,6 +84,7 @@ const TreadMillGrid = () => {
     if (!selectedDate || !selectedItem || selectedItem.pk === null) return;
     setIsTimeSlotsLoading(true);
     setTimeSlots([]);
+    setSelectedStartTimeSlot(null);
     try {
       const res = await fetchTreadmillTimeSlots(selectedItem.pk, selectedDate);
       const bookedSet = new Set(
@@ -94,10 +100,10 @@ const TreadMillGrid = () => {
       );
 
       const now = new Date();
-      const allSlots = getTimeSlots().map((time) => {
+      const processedSlots = allTimeSlots.map((time, index) => {
         let fullDateTime;
-        let slotDateTime;
         let displayTime = time;
+        let slotDateTime;
 
         if (time.startsWith("nextDay")) {
           const actualTime = time.substring(7);
@@ -127,18 +133,47 @@ const TreadMillGrid = () => {
 
         const isBooked = bookedSet.has(fullDateTime);
         return {
+          id: `${selectedDate}-${time}-${selectedItem.pk}`, // 고유 ID
           start_time: fullDateTime,
+          display_time: displayTime,
           is_booked: isBooked,
           is_past: isPast,
-          display_time: displayTime,
+          index: index,
         };
       });
-      setTimeSlots(allSlots);
+      setTimeSlots(processedSlots);
     } catch (error) {
       console.error("시간 슬롯 불러오기 실패", error);
       setTimeSlots([]);
     } finally {
       setIsTimeSlotsLoading(false);
+    }
+  };
+
+  const handleTimeSlotClick = (clickedSlot) => {
+    if (clickedSlot.is_booked || clickedSlot.is_past || isTimeSlotsLoading) {
+      return;
+    }
+    if (selectedDuration === 60) {
+      const nextSlotIndex = clickedSlot.index + 1;
+      if (nextSlotIndex < timeSlots.length) {
+        const nextSlot = timeSlots[nextSlotIndex];
+        const clickedSlotTime = new Date(clickedSlot.start_time);
+        const nextSlotTime = new Date(nextSlot.start_time);
+        const timeDiff = (nextSlotTime - clickedSlotTime) / (1000 * 60);
+
+        if (timeDiff === 30 && !nextSlot.is_booked && !nextSlot.is_past) {
+          setSelectedStartTimeSlot(clickedSlot);
+        } else {
+          alert("60분 예약의 경우, 연속된 두 개의 빈 슬롯이 필요합니다.");
+          setSelectedStartTimeSlot(null);
+        }
+      } else {
+        alert("선택한 시간부터 60분 예약이 불가능합니다 (시간 범위 초과).");
+        setSelectedStartTimeSlot(null);
+      }
+    } else {
+      setSelectedStartTimeSlot(clickedSlot);
     }
   };
 
@@ -160,7 +195,7 @@ const TreadMillGrid = () => {
         } else {
           return {
             ...def,
-            is_available: false, // API에 정보가 없으면 기본적으로 사용 불가(수리중)로 간주
+            is_available: false,
             is_using: null,
             isLoading: false,
             fetchFailed: false,
@@ -192,11 +227,11 @@ const TreadMillGrid = () => {
     if (selectedItem && selectedDate) {
       fetchSlotsForSelectedItem();
     }
-  }, [selectedDate, selectedItem]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedDate, selectedItem, selectedDuration]);
 
   const handleClick = (itemData) => {
     const itemName = itemData.name || `트레드밀 ${itemData.number}`;
-
     if (itemData.isLoading) {
       alert("트레드밀 정보를 가져오는 중입니다. 잠시 후 다시 시도해주세요.");
       return;
@@ -206,37 +241,32 @@ const TreadMillGrid = () => {
       return;
     }
     if (itemData.is_using === true) {
-      // is_using이 true면 항상 사용 중 알림
       alert(`${itemName}은(는) 현재 사용 중입니다.`);
       return;
     }
-
     if (
-      itemData.is_available === false || // is_available이 false이거나
-      (itemData.apiMissing && !itemData.fetchFailed) // API에 데이터가 없는 경우
+      itemData.is_available === false ||
+      (itemData.apiMissing && !itemData.fetchFailed)
     ) {
       alert(`이 ${itemName}은(는) 현재 사용할 수 없습니다 (수리중).`);
       return;
     }
     if (itemData.is_available === null) {
-      // is_available이 null인 경우 (초기 상태 또는 API 호출 실패)
       alert(
         `${itemName}의 상태를 확인할 수 없습니다. 새로고침 후 다시 시도해주세요.`
       );
       return;
     }
-
     if (itemData.is_available === true && !itemData.apiMissing) {
-      // is_available이 true이고, API에 데이터가 있는 경우
       const today = new Date();
       const year = today.getFullYear();
       const month = String(today.getMonth() + 1).padStart(2, "0");
       const day = String(today.getDate()).padStart(2, "0");
       const formattedToday = `${year}-${month}-${day}`;
-
       setSelectedDate(formattedToday);
       setSelectedItem(itemData);
       setSelectedDuration(30);
+      setSelectedStartTimeSlot(null);
       setIsModalOpen(true);
     } else {
       alert(`${itemName}의 상태가 예약 가능한 상태가 아닙니다.`);
@@ -247,31 +277,34 @@ const TreadMillGrid = () => {
     setSelectedDate(e.target.value);
   };
 
-  const getStatusStyle = (statusData) => {
-    let backgroundColor = "#BEBEBE"; // 기본 로딩/알수없음 색상
-    let cursor = "default";
-    let textColor = "#333"; // 기본 텍스트 색상
+  const handleDurationChange = (duration) => {
+    setSelectedDuration(duration);
+    setSelectedStartTimeSlot(null);
+  };
 
+  const getStatusStyle = (statusData) => {
+    let backgroundColor = "#BEBEBE";
+    let cursor = "default";
+    let textColor = "#333";
     if (statusData) {
       if (statusData.isLoading) {
-        // 로딩 중 스타일은 기본값 유지
       } else if (statusData.fetchFailed) {
-        backgroundColor = "#D3D3D3"; // 에러 시 연한 회색
+        backgroundColor = "#D3D3D3";
       } else if (statusData.is_using === true) {
         backgroundColor = "red";
         cursor = "not-allowed";
-        textColor = "#FFFFFF"; // 흰색 텍스트
+        textColor = "#FFFFFF";
       } else if (
         statusData.is_available === false ||
         (statusData.apiMissing && !statusData.fetchFailed)
       ) {
-        backgroundColor = "yellow"; // 수리중 또는 API 정보 누락
+        backgroundColor = "yellow";
         cursor = "not-allowed";
-        textColor = "#333333"; // 검은색 텍스트
+        textColor = "#333333";
       } else if (statusData.is_available === true && !statusData.apiMissing) {
         backgroundColor = "green";
         cursor = "pointer";
-        textColor = "#FFFFFF"; // 흰색 텍스트
+        textColor = "#FFFFFF";
       }
     }
     return { backgroundColor, cursor, color: textColor };
@@ -279,25 +312,19 @@ const TreadMillGrid = () => {
 
   return (
     <div className="gym-items-row-container">
-      {" "}
-      {/* GymPage.css의 스타일 사용 */}
       {statuses.map((itemStatus) => {
         const { backgroundColor, cursor, color } = getStatusStyle(itemStatus);
         const itemName = itemStatus.name || `트레드밀 ${itemStatus.number}`;
         let displayText = itemName;
-
         if (itemStatus.isLoading) {
           displayText = "로딩중...";
         } else if (itemStatus.fetchFailed) {
           displayText = `${itemName} (상태 확인 실패)`;
-        } else if (itemStatus.apiMissing && !itemStatus.fetchFailed) {
-          //  displayText = `${itemName} (수리중)`; // API 데이터 없는 경우 '수리중'으로 표시
         }
-
         return (
           <div
             key={itemStatus.pk}
-            className={`item-box cycleTable`} // GymPage.css의 cycleTable 클래스 재활용 또는 treadmillTable 클래스 추가 정의
+            className={`item-box cycleTable`}
             style={{ backgroundColor, cursor, color }}
             onClick={() => handleClick(itemStatus)}
           >
@@ -305,15 +332,17 @@ const TreadMillGrid = () => {
           </div>
         );
       })}
+
       {isModalOpen && selectedItem && (
         <div className="modal-overlay">
           <div className="modal">
             <h2>
-              {selectedItem.name || `트레드밀 ${selectedItem.number}`} 예약
+              {" "}
+              {selectedItem.name || `트레드밀 ${selectedItem.number}`} 예약{" "}
             </h2>
-            <label htmlFor="date-select">날짜 선택:</label>
+            <label htmlFor="date-select-treadmill">날짜 선택:</label>
             <select
-              id="date-select"
+              id="date-select-treadmill"
               onChange={handleDateChange}
               value={selectedDate || ""}
               disabled={isTimeSlotsLoading}
@@ -335,7 +364,8 @@ const TreadMillGrid = () => {
                 });
                 return (
                   <option key={index} value={formattedDate}>
-                    {formattedDate} ({weekday})
+                    {" "}
+                    {formattedDate} ({weekday}){" "}
                   </option>
                 );
               })}
@@ -346,42 +376,43 @@ const TreadMillGrid = () => {
                 <h4>{selectedDate} 시간 선택</h4>
                 {isTimeSlotsLoading ? (
                   <p className="loading-message">
+                    {" "}
                     시간 정보를 불러오는 중입니다...
                   </p>
                 ) : timeSlots.length > 0 ? (
                   <ul>
-                    {timeSlots.map((slot, idx) => (
-                      <li
-                        key={idx}
-                        style={{
-                          color: slot.is_booked
-                            ? "red"
-                            : slot.is_past
-                            ? "grey"
-                            : "green",
-                          cursor:
-                            slot.is_booked || slot.is_past || isTimeSlotsLoading
-                              ? "not-allowed"
-                              : "pointer",
-                          backgroundColor: slot.is_booked
-                            ? "#ffdddd"
-                            : slot.is_past
-                            ? "#f0f0f0"
-                            : "#ddffdd",
-                        }}
-                        onClick={() => {
-                          if (
-                            !slot.is_booked &&
-                            !slot.is_past &&
-                            !isTimeSlotsLoading
-                          ) {
-                            reserveSlot(slot.start_time);
+                    {timeSlots.map((slot, index) => {
+                      let className = "time-slot-item";
+                      if (slot.is_booked) className += " time-slot-booked";
+                      else if (slot.is_past) className += " time-slot-past";
+                      else className += " time-slot-available";
+
+                      if (selectedStartTimeSlot) {
+                        if (slot.id === selectedStartTimeSlot.id) {
+                          className += " time-slot-selected";
+                        }
+                        if (
+                          selectedDuration === 60 &&
+                          selectedStartTimeSlot.index + 1 === index &&
+                          slot.id ===
+                            timeSlots[selectedStartTimeSlot.index + 1]?.id
+                        ) {
+                          if (!slot.is_booked && !slot.is_past) {
+                            className += " time-slot-selected";
                           }
-                        }}
-                      >
-                        {slot.display_time}
-                      </li>
-                    ))}
+                        }
+                      }
+                      return (
+                        <li
+                          key={slot.id}
+                          className={className}
+                          onClick={() => handleTimeSlotClick(slot)}
+                        >
+                          {" "}
+                          {slot.display_time}{" "}
+                        </li>
+                      );
+                    })}
                   </ul>
                 ) : (
                   <p>예약 가능한 시간대가 없거나 불러올 수 없습니다.</p>
@@ -393,48 +424,64 @@ const TreadMillGrid = () => {
                 <label>예약 시간:</label>
                 <div className="duration-options">
                   <div>
+                    {" "}
                     <input
                       type="radio"
                       id="duration30-treadmill"
                       name="duration-treadmill"
                       value="30"
                       checked={selectedDuration === 30}
-                      onChange={() => setSelectedDuration(30)}
+                      onChange={() => handleDurationChange(30)}
                       disabled={isTimeSlotsLoading}
-                    />
+                    />{" "}
                     <label
                       htmlFor="duration30-treadmill"
                       className="duration-label"
                     >
                       30분
-                    </label>
+                    </label>{" "}
                   </div>
                   <div>
+                    {" "}
                     <input
                       type="radio"
                       id="duration60-treadmill"
                       name="duration-treadmill"
                       value="60"
                       checked={selectedDuration === 60}
-                      onChange={() => setSelectedDuration(60)}
+                      onChange={() => handleDurationChange(60)}
                       disabled={isTimeSlotsLoading}
-                    />
+                    />{" "}
                     <label
                       htmlFor="duration60-treadmill"
                       className="duration-label"
                     >
                       60분
-                    </label>
+                    </label>{" "}
                   </div>
                 </div>
               </div>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                className="modal-close-button"
-                disabled={isTimeSlotsLoading}
-              >
-                닫기
-              </button>
+              <div className="modal-action-buttons">
+                <button
+                  className="modal-reserve-button"
+                  onClick={handleReserveClick}
+                  disabled={!selectedStartTimeSlot || isTimeSlotsLoading}
+                >
+                  {" "}
+                  예약하기{" "}
+                </button>
+                <button
+                  onClick={() => {
+                    setIsModalOpen(false);
+                    setSelectedStartTimeSlot(null);
+                  }}
+                  className="modal-close-button"
+                  disabled={isTimeSlotsLoading}
+                >
+                  {" "}
+                  닫기{" "}
+                </button>
+              </div>
             </div>
           </div>
         </div>

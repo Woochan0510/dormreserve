@@ -1,7 +1,3 @@
-/* src/styles/LoungePage.css */
-
-/* Ensure these base classes are available, e.g., from a global stylesheet or defined here */
-/* .base-page-container, .main-content-area are assumed to be similar to other pages */
 .base-page-container {
   display: flex;
   flex-direction: column;
@@ -13,133 +9,122 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: flex-start; /* Align content to the top */
+  justify-content: flex-start;
   padding: 20px;
   background-color: #fff;
 }
 
 .map {
-  /* Common map styling */
   border: 2px solid black;
   width: 90%;
-  max-width: 1000px; /* Max width for the map area */
-  min-height: 450px; /* Adjusted min-height */
+  max-width: 1000px;
+  min-height: 450px;
   padding: 15px;
   box-sizing: border-box;
   background-color: #f9f9f9;
   border-radius: 8px;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-  /* display: flex; already handled by lounge-map-layout if used */
-  /* justify-content: center; */
-  /* align-items: center; */
 }
 
 .map.lounge-map-layout {
-  /* Target the map div specifically on the lounge page */
   display: flex;
   flex-direction: row;
-  justify-content: space-around; /* Distributes space between the two columns */
-  align-items: flex-start; /* Aligns columns to the top */
+  justify-content: space-around;
+  align-items: flex-start;
   width: 100%;
-  /* height: 100%; Let content define height or set a specific one */
   padding: 20px;
   box-sizing: border-box;
-  gap: 20px; /* Space between the arcade and ping-pong columns */
+  gap: 20px;
 }
 
 .lounge-section-column {
   display: flex;
-  flex-direction: column; /* Items within a column are stacked vertically */
-  align-items: center; /* Center items horizontally within the column */
-  gap: 15px; /* Space between items within a column */
-  flex: 1; /* Each column takes up equal space */
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+  flex: 1;
   padding: 15px;
   border-radius: 8px;
-  background-color: #f0f2f5; /* Slightly different background for sections */
+  background-color: #f0f2f5;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-  min-width: 220px; /* Minimum width for a section column */
+  min-width: 220px;
 }
 
 .section-title {
-  font-size: 1.4em; /* Increased size */
-  font-weight: 600; /* Bolder */
-  color: #4a5568; /* Darker grey for better readability */
+  font-size: 1.4em;
+  font-weight: 600;
+  color: #4a5568;
   margin-bottom: 20px;
   text-align: center;
   width: 100%;
-  padding-bottom: 12px; /* Increased padding */
-  border-bottom: 2px solid #e2e8f0; /* Thicker, lighter border */
+  padding-bottom: 12px;
+  border-bottom: 2px solid #e2e8f0;
 }
 
-/* Container for items within each grid component */
 .arcade-grid-items-container,
 .pingpong-grid-items-container {
   display: flex;
   flex-direction: column;
-  align-items: center; /* Center items like in the image */
+  align-items: center;
   width: 100%;
-  gap: 15px; /* Consistent gap */
+  gap: 15px;
 }
 
-/* Common item styling - can be refined or live in specific grid CSS */
 .item-box {
   display: flex;
   justify-content: center;
   align-items: center;
-  border: 2px solid #666; /* Darker border */
+  border: 2px solid #666;
   font-weight: bold;
-  /* color: #fff; Removed default white text color, will be set by inline style in JSX */
-  border-radius: 8px; /* Slightly more rounded */
+  border-radius: 8px;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
   text-align: center;
-  padding: 20px; /* More padding */
+  padding: 20px;
   transition: transform 0.2s ease, box-shadow 0.2s ease,
     background-color 0.3s ease;
-  min-height: 80px; /* Increased min-height */
+  min-height: 80px;
   box-sizing: border-box;
   cursor: pointer;
 }
 
 .item-box:hover {
-  transform: translateY(-3px) scale(1.03); /* Enhanced hover effect */
+  transform: translateY(-3px) scale(1.03);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .arcadeTable {
-  width: 150px; /* Adjusted to be visually distinct */
-  height: 150px; /* Square */
+  width: 150px;
+  height: 150px;
   font-size: 1em;
 }
-
 .pingPongTable {
-  width: 220px; /* Larger for ping pong tables */
+  width: 220px;
   height: 110px;
   font-size: 1.1em;
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
   .map.lounge-map-layout {
     flex-direction: column;
-    align-items: center; /* Center columns when stacked */
+    align-items: center;
   }
   .lounge-section-column {
-    width: 90%; /* Sections take more width */
+    width: 90%;
     max-width: 500px;
-    margin-bottom: 25px; /* More space when stacked */
+    margin-bottom: 25px;
   }
   .lounge-section-column:last-child {
     margin-bottom: 0;
   }
   .arcadeTable {
     width: 80%;
-    max-width: 180px; /* Adjust max-width for arcade on mobile */
+    max-width: 180px;
     height: auto;
     min-height: 120px;
   }
   .pingPongTable {
     width: 90%;
-    max-width: 280px; /* Adjust max-width for pingpong on mobile */
+    max-width: 280px;
     height: auto;
     min-height: 100px;
   }
@@ -152,41 +137,47 @@
   }
   .duration-select-container {
     width: 100%;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
   }
   .duration-options {
+    flex-direction: row;
+    justify-content: space-around;
+    gap: 10px;
+  }
+  .modal-action-buttons {
     flex-direction: column;
+    width: 100%;
     gap: 8px;
   }
+  .modal-reserve-button,
   .modal-close-button {
     width: 100%;
-    margin-top: 0;
+    margin-left: 0;
   }
 }
 
-/* Modal styles - Copied/Adapted from CookGrid.css for consistency */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.6); /* Darker overlay */
+  background-color: rgba(0, 0, 0, 0.6);
   display: flex;
   justify-content: center;
   align-items: center;
   z-index: 1000;
-  padding: 15px; /* Padding for smaller screens */
+  padding: 15px;
   box-sizing: border-box;
 }
 
 .modal {
   background-color: #ffffff;
-  padding: 30px 35px; /* More padding */
-  border-radius: 12px; /* More rounded */
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); /* Stronger shadow */
+  padding: 30px 35px;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
   width: 100%;
-  max-width: 550px; /* Slightly wider modal */
+  max-width: 550px;
   max-height: 90vh;
   overflow-y: auto;
   display: flex;
@@ -198,26 +189,24 @@
 .modal h2 {
   margin-top: 0;
   margin-bottom: 25px;
-  font-size: 1.8em; /* Larger title */
-  color: #1a202c; /* Darker text */
+  font-size: 1.8em;
+  color: #1a202c;
   text-align: center;
   font-weight: 600;
 }
-
 .modal label {
   display: block;
-  margin-bottom: 10px; /* More space */
+  margin-bottom: 10px;
   font-weight: 500;
   font-size: 1em;
   color: #4a5568;
 }
-
 .modal select {
   width: 100%;
-  padding: 14px 18px; /* Larger select */
-  margin-bottom: 20px; /* 시간 선택 컨테이너와의 간격 */
-  border: 1px solid #cbd5e0; /* Lighter border */
-  border-radius: 8px; /* More rounded */
+  padding: 14px 18px;
+  margin-bottom: 20px;
+  border: 1px solid #cbd5e0;
+  border-radius: 8px;
   box-sizing: border-box;
   font-size: 1.05em;
   background-color: #f7fafc;
@@ -225,22 +214,21 @@
   background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%234A5568%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.4-12.8z%22%2F%3E%3C%2Fsvg%3E");
   background-repeat: no-repeat;
   background-position: right 18px center;
-  background-size: 10px; /* Smaller arrow */
+  background-size: 10px;
   cursor: pointer;
 }
 .modal select:focus {
-  border-color: #4299e1; /* Tailwind blue focus */
+  border-color: #4299e1;
   outline: 0;
-  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5); /* Tailwind focus ring */
+  box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5);
 }
 
 .time-slots-container {
   min-height: 150px;
   display: flex;
   flex-direction: column;
-  margin-bottom: 20px; /* 하단 컨트롤 영역과의 간격 */
+  margin-bottom: 20px;
 }
-
 .time-slots-container h4 {
   margin-top: 0;
   margin-bottom: 18px;
@@ -249,77 +237,73 @@
   text-align: center;
   font-weight: 500;
 }
-
 .loading-message {
-  /* Make sure this class is used in JSX for consistency */
   color: #718096;
   font-style: italic;
   padding: 25px 0;
   text-align: center;
   font-size: 0.95em;
 }
-
 .time-slots-container ul {
   list-style: none;
   padding: 0;
   margin: 0;
   display: grid;
-  grid-template-columns: repeat(
-    auto-fill,
-    minmax(90px, 1fr)
-  ); /* Slightly wider items */
-  gap: 12px; /* More gap */
-  max-height: 320px; /* Increased max height */
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 12px;
+  max-height: 320px;
   overflow-y: auto;
-  padding: 8px; /* Padding around the list */
-  border: 1px solid #e2e8f0; /* Border for the list area */
+  padding: 8px;
+  border: 1px solid #e2e8f0;
   border-radius: 6px;
 }
-
-.time-slots-container li {
-  padding: 12px 8px; /* More padding */
+.time-slots-container li.time-slot-item {
+  padding: 12px 8px;
   border: 1px solid #e2e8f0;
-  border-radius: 6px; /* More rounded */
+  border-radius: 6px;
   text-align: center;
   transition: all 0.2s ease-in-out;
   font-size: 0.95em;
   font-weight: 500;
-  word-break: keep-all; /* Prevents awkward text wrapping */
+  word-break: keep-all;
 }
-
-.time-slots-container li[style*="cursor: pointer"] {
-  /* Styles for available slots */
-  background-color: #ebf8ff; /* Lighter blue */
-  color: #2b6cb0; /* Darker blue text */
+.time-slots-container li.time-slot-available {
+  background-color: #ebf8ff;
+  color: #2b6cb0;
   border-color: #90cdf4;
+  cursor: pointer;
 }
-.time-slots-container li[style*="cursor: pointer"]:hover {
-  background-color: #bee3f8; /* Darker on hover */
+.time-slots-container li.time-slot-available:hover {
+  background-color: #bee3f8;
   border-color: #63b3ed;
   transform: translateY(-2px);
   box-shadow: 0 3px 7px rgba(0, 0, 0, 0.12);
 }
-
-/* Style for booked slots */
-.time-slots-container li[style*="color: red"] {
-  background-color: #fff5f5; /* Lighter red */
-  color: #c53030; /* Darker red text */
+.time-slots-container li.time-slot-selected {
+  background-color: #a0c3e0;
+  color: #004494;
+  border-color: #0056b3;
+  font-weight: bold;
+  box-shadow: 0 0 5px rgba(0, 86, 179, 0.5);
+}
+.time-slots-container li.time-slot-booked {
+  background-color: #fff5f5;
+  color: #c53030;
   border-color: #fc8181;
   text-decoration: line-through;
+  cursor: not-allowed;
 }
-
-/* Style for past slots */
-.time-slots-container li[style*="color: grey"] {
-  /* Ensure JS uses 'grey' */
-  background-color: #edf2f7; /* Lighter grey */
-  color: #a0aec0; /* Darker grey text */
+.time-slots-container li.time-slot-past {
+  background-color: #edf2f7;
+  color: #a0aec0;
   border-color: #e2e8f0;
   text-decoration: line-through;
+  cursor: not-allowed;
 }
 
 .modal select:disabled,
 .modal button:disabled {
-  opacity: 0.5; /* More pronounced disabled state */
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
@@ -329,37 +313,31 @@
   align-items: center;
   margin-top: 20px;
   padding-top: 15px;
-  border-top: 1px solid #e2e8f0; /* LoungePage 모달의 border 색상과 유사하게 */
+  border-top: 1px solid #e2e8f0;
 }
-
 .duration-select-container {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
 }
-
 .duration-select-container > label {
   margin-bottom: 8px;
   font-weight: 500;
   font-size: 1em;
   color: #4a5568;
 }
-
 .duration-options {
   display: flex;
   gap: 15px;
 }
-
 .duration-options div {
   display: flex;
   align-items: center;
 }
-
 .duration-options input[type="radio"] {
   margin-right: 5px;
   cursor: pointer;
 }
-
 .duration-options .duration-label {
   font-size: 0.95em;
   color: #4a5568;
@@ -367,21 +345,39 @@
   font-weight: normal;
   margin-bottom: 0;
 }
-
-.modal-close-button {
-  padding: 14px 25px; /* Larger button */
-  background-color: #718096; /* Grey */
+.modal-action-buttons {
+  display: flex;
+  gap: 10px;
+}
+.modal-reserve-button {
+  padding: 14px 25px;
+  background-color: #0056b3;
   color: white;
   border: none;
-  border-radius: 8px; /* More rounded */
+  border-radius: 8px;
   cursor: pointer;
   font-size: 1.05em;
-  /* margin-top: 20px; 제거 또는 modal-bottom-controls에서 관리 */
-  /* align-self: flex-end; 제거 또는 modal-bottom-controls에서 관리 */
   font-weight: 500;
   transition: background-color 0.2s ease;
 }
-
+.modal-reserve-button:hover:not(:disabled) {
+  background-color: #004494;
+}
+.modal-reserve-button:disabled {
+  background-color: #a0c3e0;
+  cursor: not-allowed;
+}
+.modal-close-button {
+  padding: 14px 25px;
+  background-color: #718096;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.05em;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
 .modal-close-button:hover {
-  background-color: #4a5568; /* Darker grey on hover */
+  background-color: #4a5568;
 }

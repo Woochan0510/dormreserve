@@ -1,45 +1,41 @@
 /* src/styles/CookGrid.css */
 .cook-grid-layout {
   display: flex;
-  flex-direction: row; /* 기본적으로 가로 배치 (컬럼들 side-by-side) */
-  justify-content: space-around; /* 컬럼 간 균등 간격 */
-  align-items: flex-start; /* 컬럼들 상단 정렬 */
+  flex-direction: row;
+  justify-content: space-around;
+  align-items: flex-start;
   width: 100%;
-  height: 100%; /* 부모(.map)의 높이를 채우도록 시도 */
+  height: 100%;
   padding: 15px;
   box-sizing: border-box;
-  gap: 20px; /* 컬럼(스테이션) 간의 간격 */
-  flex-wrap: wrap; /* 작은 화면에서 컬럼들이 줄바꿈 되도록 */
+  gap: 20px;
+  flex-wrap: wrap;
 }
 
 .induction-station-column {
-  /* 각 스테이션(컬럼) */
   display: flex;
-  flex-direction: column; /* 내부 그룹들을 세로로 쌓음 */
-  align-items: center; /* 그룹들을 컬럼 내에서 가운데 정렬 */
-  gap: 20px; /* 그룹 간의 세로 간격 */
-  flex: 1 1 calc(50% - 10px); /* 두 개의 컬럼이 공간을 나누어 가짐 (gap 고려) */
-  max-width: calc(50% - 10px); /* 두 개의 컬럼 */
-  min-width: 250px; /* 각 컬럼의 최소 너비, 내용에 따라 조정 */
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  flex: 1 1 calc(50% - 10px);
+  max-width: calc(50% - 10px);
+  min-width: 250px;
   padding: 10px;
   box-sizing: border-box;
-  /* border: 1px dashed blue; /* DEBUG */
 }
 
 .induction-group-container {
-  /* 인덕션 그룹 (예: 상단 2개, 하단 2개 묶음) */
   display: flex;
-  flex-direction: column; /* 내부 인덕션들을 세로로 쌓음 */
-  gap: 10px; /* 인덕션 간의 간격 */
+  flex-direction: column;
+  gap: 10px;
   border: 1px solid #b0b0b0;
   padding: 15px;
   border-radius: 8px;
   background-color: #f8f8f8;
-  width: 100%; /* 스테이션 컬럼 너비에 맞춤 */
-  /* max-width: 220px; /* 그룹 최대 너비, 필요시 조정 */
-  min-height: 180px; /* 그룹 최소 높이, 내부 인덕션 2개가 충분히 보이도록 */
+  width: 100%;
+  min-height: 180px;
   box-sizing: border-box;
-  justify-content: space-around; /* 내부 인덕션들 공간 균등 분배 */
+  justify-content: space-around;
   align-items: center;
 }
 
@@ -48,13 +44,13 @@
   background-color: #fdfdfd;
 }
 .induction-group-container.empty-group .induction-hob {
-  visibility: hidden; /* 실제로는 empty-group을 사용하지 않게 될 것 */
+  visibility: hidden;
 }
 
 .induction-hob {
-  width: 95%; /* 그룹 컨테이너 내부에서 너비 */
-  min-height: 70px; /* 높이 증가 */
-  padding: 12px; /* 패딩 증가 */
+  width: 95%;
+  min-height: 70px;
+  padding: 12px;
   border: 2px solid #555;
   background-color: #e0e0e0;
   display: flex;
@@ -84,20 +80,19 @@
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
 }
 
-/* 반응형 스타일 */
 @media (max-width: 768px) {
   .cook-grid-layout {
-    flex-direction: column; /* 작은 화면에서는 컬럼들을 세로로 쌓음 */
-    align-items: center; /* 컬럼들을 가운데 정렬 */
-    gap: 20px; /* 세로 간격 */
-    height: auto; /* 내용에 따라 높이 자동 조절 */
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    height: auto;
   }
   .induction-station-column {
-    flex-basis: auto; /* 컬럼 너비 자동 조정 */
-    width: 100%; /* 컬럼이 전체 너비 사용 */
-    max-width: 400px; /* 컬럼 최대 너비 제한 (선택 사항) */
+    flex-basis: auto;
+    width: 100%;
+    max-width: 400px;
     min-width: unset;
-    flex: 1 1 100%; /* 모바일에서 한 컬럼씩 전체 너비 */
+    flex: 1 1 100%;
   }
 }
 
@@ -114,23 +109,29 @@
   }
   .modal-bottom-controls {
     flex-direction: column;
-    align-items: stretch; /* 내부 요소들 너비 채우도록 */
+    align-items: stretch;
   }
   .duration-select-container {
     width: 100%;
-    margin-bottom: 15px; /* 닫기 버튼과의 간격 */
+    margin-bottom: 10px; /* 예약하기/닫기 버튼과의 간격 */
   }
   .duration-options {
-    flex-direction: column; /* 작은 화면에서 옵션 세로 정렬 */
-    gap: 8px;
+    flex-direction: row; /* 모바일에서도 가로 유지 또는 column으로 변경 가능 */
+    justify-content: space-around; /* 옵션 간 간격 조정 */
+    gap: 10px;
   }
+  .modal-action-buttons {
+    flex-direction: column; /* 모바일에서 예약/닫기 버튼 세로로 */
+    width: 100%;
+    gap: 8px; /* 버튼 간 간격 */
+  }
+  .modal-reserve-button,
   .modal-close-button {
-    width: 100%; /* 버튼 너비 100% */
-    margin-top: 0; /* 위 요소와의 간격은 duration-select-container에서 처리 */
+    width: 100%;
+    margin-left: 0; /* 개별 버튼 margin 제거 */
   }
 }
 
-/* 모달 스타일 */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -171,7 +172,6 @@
 }
 
 .modal label {
-  /* 날짜 선택, 예약 시간 선택 라벨 공통 적용 */
   display: block;
   margin-bottom: 8px;
   font-weight: 500;
@@ -182,7 +182,7 @@
 .modal select {
   width: 100%;
   padding: 12px 15px;
-  margin-bottom: 20px; /* 시간 선택 컨테이너와의 간격 */
+  margin-bottom: 20px;
   border: 1px solid #ced4da;
   border-radius: 6px;
   box-sizing: border-box;
@@ -205,7 +205,7 @@
   min-height: 150px;
   display: flex;
   flex-direction: column;
-  margin-bottom: 20px; /* 하단 컨트롤 영역과의 간격 */
+  margin-bottom: 20px;
 }
 
 .time-slots-container h4 {
@@ -237,7 +237,8 @@
   padding: 5px;
 }
 
-.time-slots-container li {
+.time-slots-container li.time-slot-item {
+  /* 기본 li 스타일 클래스화 */
   padding: 10px 5px;
   border: 1px solid #d1d8e0;
   border-radius: 5px;
@@ -248,30 +249,41 @@
   word-break: keep-all;
 }
 
-.time-slots-container li[style*="cursor: pointer"] {
-  background-color: #e9f5ff;
+.time-slots-container li.time-slot-available {
+  background-color: #e9f5ff; /* 기존 사용 가능 색상 */
   color: #007bff;
   border-color: #a3d0ff;
+  cursor: pointer;
 }
-.time-slots-container li[style*="cursor: pointer"]:hover {
+.time-slots-container li.time-slot-available:hover {
   background-color: #d0eaff;
   border-color: #79bbff;
   transform: translateY(-2px);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
-.time-slots-container li[style*="color: red"] {
+.time-slots-container li.time-slot-selected {
+  background-color: #a0c3e0; /* 선택된 슬롯 강조 색상 (예: 파란 계열) */
+  color: #ffffff; /* 흰색 텍스트 */
+  border-color: #0056b3;
+  font-weight: bold;
+  box-shadow: 0 0 5px rgba(0, 86, 179, 0.5);
+}
+
+.time-slots-container li.time-slot-booked {
   background-color: #ffebee;
   color: #c62828;
   border-color: #ef9a9a;
   text-decoration: line-through;
+  cursor: not-allowed;
 }
 
-.time-slots-container li[style*="color: grey"] {
+.time-slots-container li.time-slot-past {
   background-color: #f5f5f5;
   color: #757575;
   border-color: #e0e0e0;
   text-decoration: line-through;
+  cursor: not-allowed;
 }
 
 .modal select:disabled,
@@ -284,9 +296,9 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 15px; /* 시간 선택 리스트와 간격 */
-  padding-top: 15px; /* 구분선 느낌을 위한 상단 패딩 */
-  border-top: 1px solid #eee; /* 구분선 */
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid #eee;
 }
 
 .duration-select-container {
@@ -296,9 +308,7 @@
 }
 
 .duration-select-container > label {
-  /* "예약 시간:" 라벨에만 적용 */
   margin-bottom: 8px;
-  /* .modal label의 스타일 상속 또는 개별 지정 */
 }
 
 .duration-options {
@@ -317,12 +327,35 @@
 }
 
 .duration-options .duration-label {
-  /* 라디오 버튼 옆 텍스트 라벨 */
   font-size: 0.9em;
-  color: #333; /* .modal label 과 다른 스타일 적용 시 */
+  color: #333;
   cursor: pointer;
-  font-weight: normal; /* .modal label 과 다른 스타일 적용 시 */
-  margin-bottom: 0; /* .modal label 과 다른 스타일 적용 시 */
+  font-weight: normal;
+  margin-bottom: 0;
+}
+
+.modal-action-buttons {
+  display: flex;
+  gap: 10px; /* 예약하기, 닫기 버튼 사이 간격 */
+}
+
+.modal-reserve-button {
+  padding: 12px 20px;
+  background-color: #0056b3; /* 광운대 메인 색상 */
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1em;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+}
+.modal-reserve-button:hover:not(:disabled) {
+  background-color: #004494; /* 더 진한 파란색 */
+}
+.modal-reserve-button:disabled {
+  background-color: #a0c3e0; /* 비활성화 시 연한 파란색 */
+  cursor: not-allowed;
 }
 
 .modal-close-button {
