@@ -112,9 +112,25 @@
     font-size: 1em;
     padding: 10px;
   }
+  .modal-bottom-controls {
+    flex-direction: column;
+    align-items: stretch; /* 내부 요소들 너비 채우도록 */
+  }
+  .duration-select-container {
+    width: 100%;
+    margin-bottom: 15px; /* 닫기 버튼과의 간격 */
+  }
+  .duration-options {
+    flex-direction: column; /* 작은 화면에서 옵션 세로 정렬 */
+    gap: 8px;
+  }
+  .modal-close-button {
+    width: 100%; /* 버튼 너비 100% */
+    margin-top: 0; /* 위 요소와의 간격은 duration-select-container에서 처리 */
+  }
 }
 
-/* 모달 스타일은 기존 CookGrid.css의 것을 그대로 사용합니다. */
+/* 모달 스타일 */
 .modal-overlay {
   position: fixed;
   top: 0;
@@ -155,6 +171,7 @@
 }
 
 .modal label {
+  /* 날짜 선택, 예약 시간 선택 라벨 공통 적용 */
   display: block;
   margin-bottom: 8px;
   font-weight: 500;
@@ -165,7 +182,7 @@
 .modal select {
   width: 100%;
   padding: 12px 15px;
-  margin-bottom: 25px;
+  margin-bottom: 20px; /* 시간 선택 컨테이너와의 간격 */
   border: 1px solid #ced4da;
   border-radius: 6px;
   box-sizing: border-box;
@@ -188,7 +205,7 @@
   min-height: 150px;
   display: flex;
   flex-direction: column;
-  margin-bottom: 20px;
+  margin-bottom: 20px; /* 하단 컨트롤 영역과의 간격 */
 }
 
 .time-slots-container h4 {
@@ -263,6 +280,51 @@
   cursor: not-allowed;
 }
 
+.modal-bottom-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 15px; /* 시간 선택 리스트와 간격 */
+  padding-top: 15px; /* 구분선 느낌을 위한 상단 패딩 */
+  border-top: 1px solid #eee; /* 구분선 */
+}
+
+.duration-select-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.duration-select-container > label {
+  /* "예약 시간:" 라벨에만 적용 */
+  margin-bottom: 8px;
+  /* .modal label의 스타일 상속 또는 개별 지정 */
+}
+
+.duration-options {
+  display: flex;
+  gap: 15px;
+}
+
+.duration-options div {
+  display: flex;
+  align-items: center;
+}
+
+.duration-options input[type="radio"] {
+  margin-right: 5px;
+  cursor: pointer;
+}
+
+.duration-options .duration-label {
+  /* 라디오 버튼 옆 텍스트 라벨 */
+  font-size: 0.9em;
+  color: #333; /* .modal label 과 다른 스타일 적용 시 */
+  cursor: pointer;
+  font-weight: normal; /* .modal label 과 다른 스타일 적용 시 */
+  margin-bottom: 0; /* .modal label 과 다른 스타일 적용 시 */
+}
+
 .modal-close-button {
   padding: 12px 20px;
   background-color: #6c757d;
@@ -271,8 +333,6 @@
   border-radius: 6px;
   cursor: pointer;
   font-size: 1em;
-  margin-top: 15px;
-  align-self: flex-end;
   font-weight: 500;
   transition: background-color 0.2s ease;
 }

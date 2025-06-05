@@ -1,6 +1,5 @@
-// src/components/lounge/ArcadeGrid.jsx
 import React, { useEffect, useState } from "react";
-import "../../styles/ArcadeGrid.css"; // CSS for individual arcade item, not overall grid
+import "../../styles/LoungePage.css"; // ArcadeGrid.css 대신 LoungePage.css 사용
 import {
   fetchArcadeMachineStatuses,
   fetchArcadeMachineTimeSlots,
@@ -19,6 +18,8 @@ const ArcadeGrid = () => {
       is_available: null,
       is_using: null,
       isLoading: true,
+      fetchFailed: false,
+      apiMissing: false,
     }))
   );
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -26,6 +27,7 @@ const ArcadeGrid = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [timeSlots, setTimeSlots] = useState([]);
   const [isTimeSlotsLoading, setIsTimeSlotsLoading] = useState(false);
+  const [selectedDuration, setSelectedDuration] = useState(30);
 
   const getTimeSlots = () => {
     const slots = [];
@@ -48,8 +50,12 @@ const ArcadeGrid = () => {
     }
     setIsTimeSlotsLoading(true);
     try {
-      await reserveArcadeMachineSlotAPI(selectedItem.pk, startTime);
-      alert("예약이 완료되었습니다.");
+      await reserveArcadeMachineSlotAPI(
+        selectedItem.pk,
+        startTime,
+        selectedDuration
+      );
+      alert(`예약이 완료되었습니다. (시간: ${selectedDuration}분)`);
       await fetchSlotsForSelectedItem();
       fetchStatuses();
     } catch (error) {
@@ -112,10 +118,13 @@ const ArcadeGrid = () => {
         const isPast =
           slotDateTime < now &&
           !(
-            slotDateTime.getHours() === 0 &&
-            (slotDateTime.getMinutes() === 0 ||
-              slotDateTime.getMinutes() === 30) &&
-            slotDateTime.getDate() === new Date(now).getDate() + 1
+            // 다음날 00:00, 00:30은 과거로 처리되지 않도록 예외 추가
+            (
+              slotDateTime.getHours() === 0 &&
+              (slotDateTime.getMinutes() === 0 ||
+                slotDateTime.getMinutes() === 30) &&
+              slotDateTime.getDate() === new Date(now).getDate() + 1
+            )
           );
 
         const isBooked = bookedSet.has(fullDateTime);
@@ -142,13 +151,27 @@ const ArcadeGrid = () => {
       const apiData = res.data;
       const newStatuses = arcadeMachineDefinitions.map((def) => {
         const apiStatus = apiData.find((apiItem) => apiItem.pk === def.pk);
-        return {
-          ...def,
-          is_available: apiStatus ? apiStatus.is_available : null,
-          is_using: apiStatus ? apiStatus.is_using : null,
-          isLoading: false,
-          apiMissing: !apiStatus,
-        };
+        // API 응답에 해당 PK가 없는 경우를 처리
+        if (apiStatus) {
+          return {
+            ...def,
+            is_available: apiStatus.is_available,
+            is_using: apiStatus.is_using,
+            isLoading: false,
+            fetchFailed: false,
+            apiMissing: false, // API에서 정보를 찾았으므로 false
+          };
+        } else {
+          // API에서 정보를 찾지 못한 경우의 처리 (예: 수리중으로 간주)
+          return {
+            ...def,
+            is_available: false, // 기본적으로 사용 불가(수리중)로 간주
+            is_using: null,
+            isLoading: false,
+            fetchFailed: false, // API 호출 자체는 성공했을 수 있음
+            apiMissing: true, // API에 해당 데이터가 없음을 표시
+          };
+        }
       });
       setStatuses(newStatuses);
     } catch (error) {
@@ -159,7 +182,8 @@ const ArcadeGrid = () => {
           is_available: null,
           is_using: null,
           isLoading: false,
-          fetchFailed: true,
+          fetchFailed: true, // API 호출 실패 플래그
+          apiMissing: false,
         }))
       );
     }
@@ -176,83 +200,120 @@ const ArcadeGrid = () => {
   }, [selectedDate, selectedItem]);
 
   const handleClick = (itemData) => {
-    if (itemData.isLoading || itemData.fetchFailed || itemData.apiMissing) {
-      alert("오락기 정보를 가져오는 중이거나 상태를 확인할 수 없습니다.");
+    const itemName = itemData.name || `오락기 ${itemData.number}`; // 아이템 이름 설정
+
+    if (itemData.isLoading) {
+      alert("오락기 정보를 가져오는 중입니다. 잠시 후 다시 시도해주세요.");
       return;
     }
-    if (itemData.is_available === false) {
-      alert("이 오락기는 현재 사용할 수 없습니다 (수리중).");
+    if (itemData.fetchFailed) {
+      // API 호출 자체가 실패한 경우
+      alert(`${itemName}의 상태 정보를 불러오지 못했습니다. (API 오류)`);
+      return;
+    }
+    if (itemData.is_using === true) {
+      // is_using이 true면 항상 사용 중 알림
+      alert(`${itemName}은(는) 현재 사용 중입니다.`);
+      return;
+    }
+
+    // is_available이 false이거나, API에 데이터가 없는 경우 (apiMissing: true)
+    if (
+      itemData.is_available === false ||
+      (itemData.apiMissing && !itemData.fetchFailed)
+    ) {
+      alert(`이 ${itemName}은(는) 현재 사용할 수 없습니다 (수리중).`);
       return;
     }
     if (itemData.is_available === null) {
-      alert("오락기 상태를 확인할 수 없습니다. 새로고침 후 다시 시도해주세요.");
+      // is_available이 null인 경우 (초기 상태 또는 API 호출 실패)
+      alert(
+        `${itemName}의 상태를 확인할 수 없습니다. 새로고침 후 다시 시도해주세요.`
+      );
       return;
     }
 
-    const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, "0");
-    const day = String(today.getDate()).padStart(2, "0");
-    const formattedToday = `${year}-${month}-${day}`;
+    // is_available이 true이고, API에 데이터가 있는 경우 (apiMissing: false)
+    if (itemData.is_available === true && !itemData.apiMissing) {
+      const today = new Date();
+      const year = today.getFullYear();
+      const month = String(today.getMonth() + 1).padStart(2, "0");
+      const day = String(today.getDate()).padStart(2, "0");
+      const formattedToday = `${year}-${month}-${day}`;
 
-    setSelectedDate(formattedToday);
-    setSelectedItem(itemData);
-    setIsModalOpen(true);
+      setSelectedDate(formattedToday);
+      setSelectedItem(itemData);
+      setSelectedDuration(30);
+      setIsModalOpen(true);
+    } else {
+      // 위의 조건들로 이미 처리되었으므로, 이 부분은 도달하지 않거나
+      // 예상치 못한 상태에 대한 기본 알림으로 남겨둘 수 있습니다.
+      alert(`${itemName}의 상태가 예약 가능한 상태가 아닙니다.`);
+    }
   };
 
   const handleDateChange = (e) => {
     setSelectedDate(e.target.value);
   };
 
+  const getStatusStyle = (statusData) => {
+    let backgroundColor = "#BEBEBE"; // 기본 로딩/알수없음 색상
+    let cursor = "default";
+    let textColor = "#333"; // 기본 텍스트 색상
+
+    if (statusData) {
+      if (statusData.isLoading) {
+        // 로딩 중 스타일은 기본값 유지
+      } else if (statusData.fetchFailed) {
+        backgroundColor = "#D3D3D3"; // 에러 시 연한 회색
+      } else if (statusData.is_using === true) {
+        backgroundColor = "red";
+        cursor = "not-allowed";
+        textColor = "#FFFFFF"; // 흰색 텍스트
+      } else if (
+        statusData.is_available === false ||
+        (statusData.apiMissing && !statusData.fetchFailed)
+      ) {
+        backgroundColor = "yellow"; // 수리중 또는 API 정보 누락
+        cursor = "not-allowed";
+        textColor = "#333333"; // 검은색 텍스트
+      } else if (statusData.is_available === true && !statusData.apiMissing) {
+        backgroundColor = "green";
+        cursor = "pointer";
+        textColor = "#FFFFFF"; // 흰색 텍스트
+      }
+    }
+    return { backgroundColor, cursor, color: textColor };
+  };
+
   return (
     <div className="arcade-grid-items-container">
+      {" "}
+      {/* LoungePage.css의 스타일 사용 */}
       {statuses.map((itemStatus) => {
-        let backgroundColor = "#BEBEBE"; // Medium gray for loading
-        let textColor = "#333333"; // Dark gray text
-        let cursor = "default";
+        const { backgroundColor, cursor, color } = getStatusStyle(itemStatus);
         const itemName = itemStatus.name || `오락기 ${itemStatus.number}`;
         let displayText = itemName;
 
         if (itemStatus.isLoading) {
           displayText = "로딩중...";
-          cursor = "wait";
-        } else if (itemStatus.fetchFailed || itemStatus.apiMissing) {
+        } else if (itemStatus.fetchFailed) {
           displayText = `${itemName} (상태 확인 실패)`;
-          backgroundColor = "#D3D3D3"; // Light gray for error
-        } else if (itemStatus.is_available === false) {
-          backgroundColor = "yellow";
-        } else if (itemStatus.is_using === true) {
-          backgroundColor = "red";
-          textColor = "#FFFFFF";
-        } else if (itemStatus.is_available === true) {
-          backgroundColor = "green";
-          textColor = "#FFFFFF";
-          cursor = "pointer";
+        } else if (itemStatus.apiMissing && !itemStatus.fetchFailed) {
+          // displayText = `${itemName} (수리중)`;
         }
 
         return (
           <div
             key={itemStatus.pk}
-            className={`item-box arcadeTable`}
-            style={{ backgroundColor, cursor, color: textColor }}
-            onClick={() => {
-              if (
-                itemStatus.is_available === true &&
-                !itemStatus.isLoading &&
-                !itemStatus.fetchFailed &&
-                !itemStatus.apiMissing
-              ) {
-                handleClick(itemStatus);
-              } else if (itemStatus.is_available === false) {
-                alert(`이 ${itemName}(은)는 현재 사용할 수 없습니다 (수리중).`);
-              }
-            }}
+            className={`item-box arcadeTable`} // LoungePage.css의 스타일 사용
+            style={{ backgroundColor, cursor, color: color }}
+            onClick={() => handleClick(itemStatus)}
           >
             {displayText}
           </div>
         );
       })}
-
       {isModalOpen && selectedItem && (
         <div className="modal-overlay">
           <div className="modal">
@@ -306,7 +367,7 @@ const ArcadeGrid = () => {
                             ? "grey"
                             : "green",
                           cursor:
-                            slot.is_booked || slot.is_past
+                            slot.is_booked || slot.is_past || isTimeSlotsLoading
                               ? "not-allowed"
                               : "pointer",
                           backgroundColor: slot.is_booked
@@ -334,13 +395,54 @@ const ArcadeGrid = () => {
                 )}
               </div>
             )}
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="modal-close-button"
-              disabled={isTimeSlotsLoading}
-            >
-              닫기
-            </button>
+            <div className="modal-bottom-controls">
+              <div className="duration-select-container">
+                <label>예약 시간:</label>
+                <div className="duration-options">
+                  <div>
+                    <input
+                      type="radio"
+                      id="duration30-arcade"
+                      name="duration-arcade"
+                      value="30"
+                      checked={selectedDuration === 30}
+                      onChange={() => setSelectedDuration(30)}
+                      disabled={isTimeSlotsLoading}
+                    />
+                    <label
+                      htmlFor="duration30-arcade"
+                      className="duration-label"
+                    >
+                      30분
+                    </label>
+                  </div>
+                  <div>
+                    <input
+                      type="radio"
+                      id="duration60-arcade"
+                      name="duration-arcade"
+                      value="60"
+                      checked={selectedDuration === 60}
+                      onChange={() => setSelectedDuration(60)}
+                      disabled={isTimeSlotsLoading}
+                    />
+                    <label
+                      htmlFor="duration60-arcade"
+                      className="duration-label"
+                    >
+                      60분
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="modal-close-button"
+                disabled={isTimeSlotsLoading}
+              >
+                닫기
+              </button>
+            </div>
           </div>
         </div>
       )}

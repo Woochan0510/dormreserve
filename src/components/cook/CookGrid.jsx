@@ -30,6 +30,7 @@ const CookGrid = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [timeSlots, setTimeSlots] = useState([]);
   const [isTimeSlotsLoading, setIsTimeSlotsLoading] = useState(false);
+  const [selectedDuration, setSelectedDuration] = useState(30);
 
   const getTimeSlots = () => {
     const slots = [];
@@ -48,11 +49,17 @@ const CookGrid = () => {
       alert("예약할 인덕션을 선택해주세요.");
       return;
     }
+    setIsTimeSlotsLoading(true); // 예약 시도 시 로딩 상태 활성화
     try {
-      await reserveInductionSlotAPI(selectedInduction, startTime);
-      alert("예약이 완료되었습니다.");
+      await reserveInductionSlotAPI(
+        selectedInduction,
+        startTime,
+        selectedDuration
+      );
+      alert(`예약이 완료되었습니다. (시간: ${selectedDuration}분)`);
       await fetchSlotsForSelectedDateAndInduction();
       fetchStatuses();
+      // 예약 성공 후 모달을 바로 닫지 않거나, 필요시 setIsModalOpen(false); 추가
     } catch (error) {
       console.error("예약 실패:", error);
       alert(
@@ -61,6 +68,8 @@ const CookGrid = () => {
             error.message ||
             "알 수 없는 에러가 발생했습니다.")
       );
+    } finally {
+      setIsTimeSlotsLoading(false); // 로딩 상태 비활성화
     }
   };
 
@@ -158,6 +167,7 @@ const CookGrid = () => {
 
     setSelectedDate(formattedToday);
     setSelectedInduction(inductionPk);
+    setSelectedDuration(30);
     setIsModalOpen(true);
   };
 
@@ -273,7 +283,7 @@ const CookGrid = () => {
                             ? "grey"
                             : "green",
                           cursor:
-                            slot.is_booked || slot.is_past
+                            slot.is_booked || slot.is_past || isTimeSlotsLoading
                               ? "not-allowed"
                               : "pointer",
                           backgroundColor: slot.is_booked
@@ -304,13 +314,48 @@ const CookGrid = () => {
                 )}
               </div>
             )}
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="modal-close-button"
-              disabled={isTimeSlotsLoading}
-            >
-              닫기
-            </button>
+            <div className="modal-bottom-controls">
+              <div className="duration-select-container">
+                <label>예약 시간:</label>
+                <div className="duration-options">
+                  <div>
+                    <input
+                      type="radio"
+                      id="duration30-cook"
+                      name="duration-cook"
+                      value="30"
+                      checked={selectedDuration === 30}
+                      onChange={() => setSelectedDuration(30)}
+                      disabled={isTimeSlotsLoading}
+                    />
+                    <label htmlFor="duration30-cook" className="duration-label">
+                      30분
+                    </label>
+                  </div>
+                  <div>
+                    <input
+                      type="radio"
+                      id="duration60-cook"
+                      name="duration-cook"
+                      value="60"
+                      checked={selectedDuration === 60}
+                      onChange={() => setSelectedDuration(60)}
+                      disabled={isTimeSlotsLoading}
+                    />
+                    <label htmlFor="duration60-cook" className="duration-label">
+                      60분
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="modal-close-button"
+                disabled={isTimeSlotsLoading}
+              >
+                닫기
+              </button>
+            </div>
           </div>
         </div>
       )}

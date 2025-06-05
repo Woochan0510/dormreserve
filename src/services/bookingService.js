@@ -1,8 +1,7 @@
-// src/services/bookingService.js
 import apiClient from "./apiClient";
 
 export const fetchInductionStatuses = async () => {
-  return apiClient.get("api/v1/kitchen/inductions/"); //
+  return apiClient.get("api/v1/kitchen/inductions/");
 };
 
 export const fetchInductionTimeSlots = async (inductionId, date) => {
@@ -18,15 +17,11 @@ export const reserveInductionSlot = async (
   durationMinutes = 30
 ) => {
   return apiClient.post(`api/v1/kitchen/inductions/${inductionId}/book/`, {
-    //
     start_time: startTime,
-    duration_minute: durationMinutes,
+    duration_minutes: durationMinutes,
   });
 };
 
-// Add other booking service functions for gym and lounge, for example:
-
-// Gym - Cycles
 export const fetchCycleStatuses = async () => {
   return apiClient.get("api/v1/gym/cycles/");
 };
@@ -44,11 +39,10 @@ export const reserveCycleSlot = async (
 ) => {
   return apiClient.post(`api/v1/gym/cycles/${cycleId}/book/`, {
     start_time: startTime,
-    duration_minutes: durationMinutes, // Ensure consistency in key names with backend
+    duration_minutes: durationMinutes,
   });
 };
 
-// Gym - Treadmills
 export const fetchTreadmillStatuses = async () => {
   return apiClient.get("api/v1/gym/treadmills/");
 };

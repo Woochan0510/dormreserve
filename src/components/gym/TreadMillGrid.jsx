@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import "../../styles/TreadMillGrid.css";
+import "../../styles/GymPage.css"; // TreadMillGrid.css 대신 GymPage.css를 사용하도록 변경
 import {
   fetchTreadmillStatuses,
   fetchTreadmillTimeSlots,
@@ -31,6 +31,7 @@ const TreadMillGrid = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [timeSlots, setTimeSlots] = useState([]);
   const [isTimeSlotsLoading, setIsTimeSlotsLoading] = useState(false);
+  const [selectedDuration, setSelectedDuration] = useState(30);
 
   const getTimeSlots = () => {
     const slots = [];
@@ -53,8 +54,12 @@ const TreadMillGrid = () => {
     }
     setIsTimeSlotsLoading(true);
     try {
-      await reserveTreadmillSlotAPI(selectedItem.pk, startTime);
-      alert("예약이 완료되었습니다.");
+      await reserveTreadmillSlotAPI(
+        selectedItem.pk,
+        startTime,
+        selectedDuration
+      );
+      alert(`예약이 완료되었습니다. (시간: ${selectedDuration}분)`);
       await fetchSlotsForSelectedItem();
       fetchStatuses();
     } catch (error) {
@@ -155,7 +160,7 @@ const TreadMillGrid = () => {
         } else {
           return {
             ...def,
-            is_available: false,
+            is_available: false, // API에 정보가 없으면 기본적으로 사용 불가(수리중)로 간주
             is_using: null,
             isLoading: false,
             fetchFailed: false,
@@ -201,22 +206,28 @@ const TreadMillGrid = () => {
       return;
     }
     if (itemData.is_using === true) {
+      // is_using이 true면 항상 사용 중 알림
       alert(`${itemName}은(는) 현재 사용 중입니다.`);
       return;
     }
 
-    if (itemData.is_available === false) {
+    if (
+      itemData.is_available === false || // is_available이 false이거나
+      (itemData.apiMissing && !itemData.fetchFailed) // API에 데이터가 없는 경우
+    ) {
       alert(`이 ${itemName}은(는) 현재 사용할 수 없습니다 (수리중).`);
       return;
     }
     if (itemData.is_available === null) {
+      // is_available이 null인 경우 (초기 상태 또는 API 호출 실패)
       alert(
         `${itemName}의 상태를 확인할 수 없습니다. 새로고침 후 다시 시도해주세요.`
       );
       return;
     }
 
-    if (itemData.is_available === true) {
+    if (itemData.is_available === true && !itemData.apiMissing) {
+      // is_available이 true이고, API에 데이터가 있는 경우
       const today = new Date();
       const year = today.getFullYear();
       const month = String(today.getMonth() + 1).padStart(2, "0");
@@ -225,6 +236,7 @@ const TreadMillGrid = () => {
 
       setSelectedDate(formattedToday);
       setSelectedItem(itemData);
+      setSelectedDuration(30);
       setIsModalOpen(true);
     } else {
       alert(`${itemName}의 상태가 예약 가능한 상태가 아닙니다.`);
@@ -235,47 +247,64 @@ const TreadMillGrid = () => {
     setSelectedDate(e.target.value);
   };
 
+  const getStatusStyle = (statusData) => {
+    let backgroundColor = "#BEBEBE"; // 기본 로딩/알수없음 색상
+    let cursor = "default";
+    let textColor = "#333"; // 기본 텍스트 색상
+
+    if (statusData) {
+      if (statusData.isLoading) {
+        // 로딩 중 스타일은 기본값 유지
+      } else if (statusData.fetchFailed) {
+        backgroundColor = "#D3D3D3"; // 에러 시 연한 회색
+      } else if (statusData.is_using === true) {
+        backgroundColor = "red";
+        cursor = "not-allowed";
+        textColor = "#FFFFFF"; // 흰색 텍스트
+      } else if (
+        statusData.is_available === false ||
+        (statusData.apiMissing && !statusData.fetchFailed)
+      ) {
+        backgroundColor = "yellow"; // 수리중 또는 API 정보 누락
+        cursor = "not-allowed";
+        textColor = "#333333"; // 검은색 텍스트
+      } else if (statusData.is_available === true && !statusData.apiMissing) {
+        backgroundColor = "green";
+        cursor = "pointer";
+        textColor = "#FFFFFF"; // 흰색 텍스트
+      }
+    }
+    return { backgroundColor, cursor, color: textColor };
+  };
+
   return (
     <div className="gym-items-row-container">
+      {" "}
+      {/* GymPage.css의 스타일 사용 */}
       {statuses.map((itemStatus) => {
-        let backgroundColor = "#BEBEBE";
-        let textColor = "#333333";
-        let cursor = "default";
+        const { backgroundColor, cursor, color } = getStatusStyle(itemStatus);
         const itemName = itemStatus.name || `트레드밀 ${itemStatus.number}`;
         let displayText = itemName;
 
         if (itemStatus.isLoading) {
           displayText = "로딩중...";
-          cursor = "wait";
         } else if (itemStatus.fetchFailed) {
           displayText = `${itemName} (상태 확인 실패)`;
-          backgroundColor = "#D3D3D3";
-        } else if (itemStatus.is_using === true) {
-          backgroundColor = "red";
-          textColor = "#FFFFFF";
-          cursor = "not-allowed";
-        } else if (itemStatus.is_available === false) {
-          backgroundColor = "yellow";
-          textColor = "#333333";
-          cursor = "not-allowed";
-        } else if (itemStatus.is_available === true) {
-          backgroundColor = "green";
-          textColor = "#FFFFFF";
-          cursor = "pointer";
+        } else if (itemStatus.apiMissing && !itemStatus.fetchFailed) {
+          //  displayText = `${itemName} (수리중)`; // API 데이터 없는 경우 '수리중'으로 표시
         }
 
         return (
           <div
             key={itemStatus.pk}
-            className={`item-box treadmillTable`}
-            style={{ backgroundColor, cursor, color: textColor }}
+            className={`item-box cycleTable`} // GymPage.css의 cycleTable 클래스 재활용 또는 treadmillTable 클래스 추가 정의
+            style={{ backgroundColor, cursor, color }}
             onClick={() => handleClick(itemStatus)}
           >
             {displayText}
           </div>
         );
       })}
-
       {isModalOpen && selectedItem && (
         <div className="modal-overlay">
           <div className="modal">
@@ -331,7 +360,7 @@ const TreadMillGrid = () => {
                             ? "grey"
                             : "green",
                           cursor:
-                            slot.is_booked || slot.is_past
+                            slot.is_booked || slot.is_past || isTimeSlotsLoading
                               ? "not-allowed"
                               : "pointer",
                           backgroundColor: slot.is_booked
@@ -359,13 +388,54 @@ const TreadMillGrid = () => {
                 )}
               </div>
             )}
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="modal-close-button"
-              disabled={isTimeSlotsLoading}
-            >
-              닫기
-            </button>
+            <div className="modal-bottom-controls">
+              <div className="duration-select-container">
+                <label>예약 시간:</label>
+                <div className="duration-options">
+                  <div>
+                    <input
+                      type="radio"
+                      id="duration30-treadmill"
+                      name="duration-treadmill"
+                      value="30"
+                      checked={selectedDuration === 30}
+                      onChange={() => setSelectedDuration(30)}
+                      disabled={isTimeSlotsLoading}
+                    />
+                    <label
+                      htmlFor="duration30-treadmill"
+                      className="duration-label"
+                    >
+                      30분
+                    </label>
+                  </div>
+                  <div>
+                    <input
+                      type="radio"
+                      id="duration60-treadmill"
+                      name="duration-treadmill"
+                      value="60"
+                      checked={selectedDuration === 60}
+                      onChange={() => setSelectedDuration(60)}
+                      disabled={isTimeSlotsLoading}
+                    />
+                    <label
+                      htmlFor="duration60-treadmill"
+                      className="duration-label"
+                    >
+                      60분
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="modal-close-button"
+                disabled={isTimeSlotsLoading}
+              >
+                닫기
+              </button>
+            </div>
           </div>
         </div>
       )}

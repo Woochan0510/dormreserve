@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import "../../styles/CycleGrid.css";
+import "../../styles/GymPage.css"; // CycleGrid.css 대신 GymPage.css를 사용하도록 변경
 import {
   fetchCycleStatuses,
   fetchCycleTimeSlots,
@@ -29,6 +29,7 @@ const CycleGrid = () => {
   const [selectedDate, setSelectedDate] = useState(null);
   const [timeSlots, setTimeSlots] = useState([]);
   const [isTimeSlotsLoading, setIsTimeSlotsLoading] = useState(false);
+  const [selectedDuration, setSelectedDuration] = useState(30);
 
   const getStatusStyle = (statusData) => {
     let backgroundColor = "#BEBEBE";
@@ -37,7 +38,9 @@ const CycleGrid = () => {
 
     if (statusData) {
       if (statusData.isLoading) {
+        // 로딩 중 스타일은 기본값 유지
       } else if (statusData.fetchFailed) {
+        backgroundColor = "#D3D3D3"; // 에러 시 연한 회색
       } else if (statusData.is_using === true) {
         backgroundColor = "red";
         cursor = "not-allowed";
@@ -46,7 +49,7 @@ const CycleGrid = () => {
         statusData.is_available === false ||
         (statusData.apiMissing && !statusData.fetchFailed)
       ) {
-        backgroundColor = "yellow";
+        backgroundColor = "yellow"; // 수리중 또는 API 정보 누락
         cursor = "not-allowed";
         textColor = "#333";
       } else if (statusData.is_available === true && !statusData.apiMissing) {
@@ -79,9 +82,9 @@ const CycleGrid = () => {
     }
     setIsTimeSlotsLoading(true);
     try {
-      await reserveCycleSlotAPI(selectedItem.pk, startTime);
-      alert("예약이 완료되었습니다.");
-      await fetchSlotsForSelectedItem();
+      await reserveCycleSlotAPI(selectedItem.pk, startTime, selectedDuration);
+      alert(`예약이 완료되었습니다. (시간: ${selectedDuration}분)`);
+      await fetchSlotsForSelectedItem(); // Corrected function name
       fetchStatuses();
     } catch (error) {
       console.error("예약 실패:", error);
@@ -97,6 +100,7 @@ const CycleGrid = () => {
   };
 
   const fetchSlotsForSelectedItem = async () => {
+    // Renamed from fetchSlotsForSelectedDateAndInduction
     if (!selectedDate || !selectedItem || selectedItem.pk === null) return;
     setIsTimeSlotsLoading(true);
     setTimeSlots([]);
@@ -181,7 +185,7 @@ const CycleGrid = () => {
         } else {
           return {
             ...def,
-            is_available: false,
+            is_available: false, // API에 정보가 없으면 기본적으로 사용 불가(수리중)로 간주
             is_using: null,
             isLoading: false,
             fetchFailed: false,
@@ -233,19 +237,21 @@ const CycleGrid = () => {
 
     if (
       itemData.is_available === false ||
-      (itemData.apiMissing && !itemData.fetchFailed)
+      (itemData.apiMissing && !itemData.fetchFailed) // apiMissing이 true이고 fetchFailed가 false인 경우 (API에 데이터가 없는 경우)
     ) {
       alert(`${itemName}은(는) 현재 사용할 수 없습니다 (수리중).`);
       return;
     }
 
     if (itemData.is_available === null) {
+      // is_available이 null인 경우 (초기 상태 또는 API 호출 실패)
       alert(
         `${itemName}의 상태를 정확히 알 수 없어 예약할 수 없습니다. 새로고침 후 다시 시도해주세요.`
       );
       return;
     }
 
+    // is_available이 true이고, API에 데이터가 있는 경우 (apiMissing: false)
     if (itemData.is_available === true && !itemData.apiMissing) {
       const today = new Date();
       const year = today.getFullYear();
@@ -255,6 +261,7 @@ const CycleGrid = () => {
 
       setSelectedDate(formattedToday);
       setSelectedItem(itemData);
+      setSelectedDuration(30);
       setIsModalOpen(true);
     } else {
       alert(`${itemName}의 상태가 예약 가능한 상태가 아닙니다.`);
@@ -267,6 +274,8 @@ const CycleGrid = () => {
 
   return (
     <div className="gym-items-row-container">
+      {" "}
+      {/* GymPage.css의 스타일 사용 */}
       {statuses.map((itemStatus) => {
         const { backgroundColor, cursor, color } = getStatusStyle(itemStatus);
         const itemName = itemStatus.name || `사이클 ${itemStatus.number}`;
@@ -276,12 +285,14 @@ const CycleGrid = () => {
           displayText = "로딩중...";
         } else if (itemStatus.fetchFailed) {
           displayText = `${itemName} (상태 확인 실패)`;
+        } else if (itemStatus.apiMissing && !itemStatus.fetchFailed) {
+          // displayText = `${itemName} (수리중)`; // API 데이터 없는 경우 '수리중'으로 표시
         }
 
         return (
           <div
             key={itemStatus.pk}
-            className="item-box cycleTable"
+            className="item-box cycleTable" // GymPage.css의 스타일 사용
             style={{ backgroundColor, cursor, color }}
             onClick={() => handleClick(itemStatus)}
           >
@@ -289,7 +300,6 @@ const CycleGrid = () => {
           </div>
         );
       })}
-
       {isModalOpen && selectedItem && (
         <div className="modal-overlay">
           <div className="modal">
@@ -343,7 +353,7 @@ const CycleGrid = () => {
                             ? "grey"
                             : "green",
                           cursor:
-                            slot.is_booked || slot.is_past
+                            slot.is_booked || slot.is_past || isTimeSlotsLoading
                               ? "not-allowed"
                               : "pointer",
                           backgroundColor: slot.is_booked
@@ -371,13 +381,54 @@ const CycleGrid = () => {
                 )}
               </div>
             )}
-            <button
-              onClick={() => setIsModalOpen(false)}
-              className="modal-close-button"
-              disabled={isTimeSlotsLoading}
-            >
-              닫기
-            </button>
+            <div className="modal-bottom-controls">
+              <div className="duration-select-container">
+                <label>예약 시간:</label>
+                <div className="duration-options">
+                  <div>
+                    <input
+                      type="radio"
+                      id="duration30-cycle"
+                      name="duration-cycle"
+                      value="30"
+                      checked={selectedDuration === 30}
+                      onChange={() => setSelectedDuration(30)}
+                      disabled={isTimeSlotsLoading}
+                    />
+                    <label
+                      htmlFor="duration30-cycle"
+                      className="duration-label"
+                    >
+                      30분
+                    </label>
+                  </div>
+                  <div>
+                    <input
+                      type="radio"
+                      id="duration60-cycle"
+                      name="duration-cycle"
+                      value="60"
+                      checked={selectedDuration === 60}
+                      onChange={() => setSelectedDuration(60)}
+                      disabled={isTimeSlotsLoading}
+                    />
+                    <label
+                      htmlFor="duration60-cycle"
+                      className="duration-label"
+                    >
+                      60분
+                    </label>
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                className="modal-close-button"
+                disabled={isTimeSlotsLoading}
+              >
+                닫기
+              </button>
+            </div>
           </div>
         </div>
       )}
